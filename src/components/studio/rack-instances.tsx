@@ -137,12 +137,15 @@ export function RackInstances({
   hoveredId,
   flagged,
   showPallets,
+  ghost = false,
 }: {
   rows: RackRow[];
   selectedId: string | null;
   hoveredId: string | null;
   flagged: Set<string>;
   showPallets: boolean;
+  /** Draw frames faint and see-through so other content (slot loads) reads. */
+  ghost?: boolean;
 }) {
   const built = useMemo(() => buildParts(rows), [rows]);
 
@@ -177,7 +180,7 @@ export function RackInstances({
         raycast={noRaycast}
         frustumCulled={false}
       >
-        <meshStandardMaterial metalness={0.3} roughness={0.6} />
+        <meshStandardMaterial metalness={0.3} roughness={0.6} transparent={ghost} opacity={ghost ? 0.18 : 1} depthWrite={!ghost} />
       </instancedMesh>
       <instancedMesh
         key={`b${cap(built.beams.length)}`}
@@ -186,7 +189,7 @@ export function RackInstances({
         raycast={noRaycast}
         frustumCulled={false}
       >
-        <meshStandardMaterial metalness={0.2} roughness={0.5} />
+        <meshStandardMaterial metalness={0.2} roughness={0.5} transparent={ghost} opacity={ghost ? 0.18 : 1} depthWrite={!ghost} />
       </instancedMesh>
       <instancedMesh
         key={`p${cap(built.pallets.length)}`}

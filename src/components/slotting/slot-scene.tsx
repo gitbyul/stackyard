@@ -119,7 +119,7 @@ export function SlotScene({
       <FitCamera floor={floor} view={view} requestKey={viewKey} />
       <SiteFloor floor={floor} dockDoors={dockDoors} />
       {/* Frames only; the loads come from the slot plan. */}
-      <RackInstances rows={rows} selectedId={null} hoveredId={null} flagged={noFlags} showPallets={false} />
+      <RackInstances rows={rows} selectedId={null} hoveredId={null} flagged={noFlags} showPallets={false} ghost />
       <SlotLoads slots={slots} rows={rows} />
     </Canvas>
   );

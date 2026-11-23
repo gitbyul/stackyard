@@ -92,11 +92,12 @@ export function FitCamera({
   const getThree = useThree((s) => s.get);
   // Re-run once MapControls has registered itself as the default controls.
   const hasControls = useThree((s) => s.controls !== null);
-  // …and once the canvas has been measured; a 0×0 size would give an infinite distance.
-  const measured = useThree((s) => s.size.width > 0 && s.size.height > 0);
+  // …and whenever the canvas size changes: the first measurement can come
+  // before the surrounding layout settles, and 0×0 would give no fit at all.
+  const sizeKey = useThree((s) => (s.size.width > 0 && s.size.height > 0 ? `${s.size.width}x${s.size.height}` : ""));
 
   useEffect(() => {
-    if (!measured) return;
+    if (!sizeKey) return;
     const { camera, invalidate, size } = getThree();
     const controls = getThree().controls as unknown as Controls | null;
     const cx = floor.width / 2;
@@ -133,6 +134,6 @@ export function FitCamera({
     controls?.target.copy(target);
     controls?.update();
     invalidate();
-  }, [view, requestKey, floor, getThree, hasControls, measured]);
+  }, [view, requestKey, floor, getThree, hasControls, sizeKey]);
   return null;
 }

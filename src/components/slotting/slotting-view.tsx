@@ -9,7 +9,7 @@ import { AbcBadge } from "@/components/analysis/abc-badge";
 import { ABC_FILL } from "@/components/analysis/abc-colors";
 import type { CameraView } from "@/components/three/site-floor";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -253,15 +253,13 @@ export function SlottingView({
         )}
 
         <Card className="gap-0 overflow-hidden py-0">
-          <CardHeader className="flex-row items-start justify-between gap-4 py-4">
-            <div className="space-y-1.5">
-              <CardTitle>Slot plan</CardTitle>
-              <CardDescription>
-                Each load is one assigned pallet position, coloured by the SKU&apos;s ABC class (order lines). Hover for
-                details.
-              </CardDescription>
-            </div>
-            <div className="flex shrink-0 gap-1">
+          <CardHeader className="py-4">
+            <CardTitle>Slot plan</CardTitle>
+            <CardDescription>
+              Each load is one assigned pallet position, coloured by the SKU&apos;s ABC class (order lines). Hover for
+              details.
+            </CardDescription>
+            <CardAction className="flex gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -280,7 +278,7 @@ export function SlottingView({
               >
                 <Rotate3d />
               </Button>
-            </div>
+            </CardAction>
           </CardHeader>
           <div className="relative h-[26rem] border-t">
             {response && plan ? (
@@ -309,14 +307,14 @@ export function SlottingView({
         </Card>
 
         <Card className="gap-0 py-0">
-          <CardHeader className="flex-row items-start justify-between gap-4 pt-6">
-            <div className="space-y-1.5">
-              <CardTitle>Assignments</CardTitle>
-              <CardDescription>Busiest SKUs first. The export lists every position.</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={download} disabled={!plan}>
-              <Download /> Export CSV
-            </Button>
+          <CardHeader className="pt-6">
+            <CardTitle>Assignments</CardTitle>
+            <CardDescription>Busiest SKUs first. The export lists every position.</CardDescription>
+            <CardAction>
+              <Button variant="outline" size="sm" onClick={download} disabled={!plan}>
+                <Download /> Export CSV
+              </Button>
+            </CardAction>
           </CardHeader>
           <Table className="mt-4">
             <TableHeader>
