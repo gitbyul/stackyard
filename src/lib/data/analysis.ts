@@ -3,6 +3,7 @@ import "server-only";
 import { and, asc, count, countDistinct, eq, gte, lte, max, min, sql } from "drizzle-orm";
 
 import type { SkuMovement } from "@/lib/analysis/abc";
+import type { SkuDims } from "@/lib/slotting/sizing";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orderLine, project, site, sku } from "@/lib/db/schema";
@@ -31,7 +32,8 @@ function shiftDays(iso: string, days: number) {
  * Per-SKU movement for one site over the last `days` days of its data.
  * The window ends at the site's latest shipment rather than today, so the
  * fixed sample dataset stays analysable as time passes. SKUs that didn't move
- * are included with zeros. Returns null if the site isn't the user's.
+ * are included with zeros, along with case dimensions for space sizing.
+ * Returns null if the site isn't the user's.
  */
 export async function getSkuMovement(siteId: string, days: PeriodDays) {
   const user = await requireUser();
@@ -49,7 +51,7 @@ export async function getSkuMovement(siteId: string, days: PeriodDays) {
     .where(eq(orderLine.siteId, siteId));
 
   if (!range?.last) {
-    return { site: owned, from: null, to: null, orders: 0, rows: [] as SkuMovement[] };
+    return { site: owned, from: null, to: null, orders: 0, rows: [] as (SkuMovement & SkuDims)[] };
   }
 
   const to = range.last;
@@ -67,6 +69,10 @@ export async function getSkuMovement(siteId: string, days: PeriodDays) {
         code: sku.code,
         name: sku.name,
         category: sku.category,
+        lengthMm: sku.lengthMm,
+        widthMm: sku.widthMm,
+        heightMm: sku.heightMm,
+        unitsPerCase: sku.unitsPerCase,
         units: sql<number>`coalesce(sum(${orderLine.quantity}), 0)::int`,
         lines: count(orderLine.id),
         orders: countDistinct(orderLine.orderNo),

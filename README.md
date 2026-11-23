@@ -57,16 +57,19 @@ src/
     page.tsx               public landing page (static)
     login/                 sign-in page + server actions (demo login)
     (app)/                 signed-in shell: sidebar + pages
-      dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/
+      dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/  slotting/
     api/auth/[...all]/     Better Auth handler
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
   components/studio/       3D editor: scene, instanced racks, store, toolbar, inspector
+  components/slotting/     slotting view, worker hook, 3D slot plan
+  components/three/        shared 3D pieces: site floor, docks, camera fitting
   components/ui/           shadcn/ui primitives
   lib/auth/                Better Auth config, session helpers, demo account
   lib/db/                  Drizzle schema + driver selection (Neon / PGlite)
   lib/analysis/            pure analysis logic (ABC classification) + unit tests
   lib/layout/              layout model, rack-field generator, stats/validation + tests
+  lib/slotting/            locations + travel cost, sizing, solver, Web Worker + tests
   lib/data/                data access layer, always scoped to the signed-in user
   proxy.ts                 optimistic redirect to /login
 scripts/                   migrate + seed
@@ -80,7 +83,7 @@ drizzle/                   generated SQL migrations
 - [ ] Movement analysis: order profiles, SKU mix
 - [x] Layout studio: instanced 3D rack editor with drag, undo/redo, validation and a rack-field generator
 - [ ] Layout studio: GPU id-buffer picking, aisles/zones, 2D DXF export
-- [ ] Auto-slotting: placement solver in a Web Worker
+- [x] Slotting: cube-per-order / velocity solver in a Web Worker, compared with a by-code baseline, 3D slot plan and CSV export
 - [ ] Productivity benchmarks
 - [ ] Process maps
 - [ ] i18n (ko/en), landing polish, deployment
