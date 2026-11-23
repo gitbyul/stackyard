@@ -13,7 +13,7 @@ const MODULES = [
   {
     icon: Boxes,
     title: "Layout studio",
-    body: "A WebGL editor that keeps 100k instanced racks and pallets at 60 fps.",
+    body: "A WebGL rack editor: every bay, beam and pallet drawn with instancing in three draw calls.",
   },
   {
     icon: Route,

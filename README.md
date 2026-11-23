@@ -9,7 +9,8 @@
 | Layer | Choice |
 | --- | --- |
 | Framework | Next.js 16 (App Router, Cache Components, Partial Prefetching) · React 19 · TypeScript |
-| UI | Tailwind CSS v4 · shadcn/ui (Radix) · lucide icons |
+| UI | Tailwind CSS v4 · shadcn/ui (Radix) · lucide icons · Recharts |
+| 3D | three.js · React Three Fiber · drei · zustand (editor state) |
 | Data | PostgreSQL via Drizzle ORM: **Neon** in production, embedded **PGlite** locally |
 | Auth | Better Auth (email + password, cookie-cached sessions), Next.js `proxy.ts` gate |
 | Hosting | Vercel (Hobby/free tier) |
@@ -56,14 +57,16 @@ src/
     page.tsx               public landing page (static)
     login/                 sign-in page + server actions (demo login)
     (app)/                 signed-in shell: sidebar + pages
-      dashboard/  projects/  projects/[projectId]/  analysis/
+      dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/
     api/auth/[...all]/     Better Auth handler
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
+  components/studio/       3D editor: scene, instanced racks, store, toolbar, inspector
   components/ui/           shadcn/ui primitives
   lib/auth/                Better Auth config, session helpers, demo account
   lib/db/                  Drizzle schema + driver selection (Neon / PGlite)
   lib/analysis/            pure analysis logic (ABC classification) + unit tests
+  lib/layout/              layout model, rack-field generator, stats/validation + tests
   lib/data/                data access layer, always scoped to the signed-in user
   proxy.ts                 optimistic redirect to /login
 scripts/                   migrate + seed
@@ -75,7 +78,8 @@ drizzle/                   generated SQL migrations
 - [x] Foundation: auth, app shell, projects/sites, sample data
 - [x] Movement analysis: ABC classification by units or order lines, Pareto curve, units × lines matrix, CSV export
 - [ ] Movement analysis: order profiles, SKU mix
-- [ ] Layout studio: instanced Three.js editor with GPU picking
+- [x] Layout studio: instanced 3D rack editor with drag, undo/redo, validation and a rack-field generator
+- [ ] Layout studio: GPU id-buffer picking, aisles/zones, 2D DXF export
 - [ ] Auto-slotting: placement solver in a Web Worker
 - [ ] Productivity benchmarks
 - [ ] Process maps

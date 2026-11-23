@@ -3,6 +3,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   real,
@@ -10,6 +11,8 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+
+import type { LayoutDoc } from "@/lib/layout/model";
 
 /* ------------------------------------------------------------------ */
 /* Auth tables (shape required by Better Auth's core schema)          */
@@ -157,4 +160,26 @@ export const orderLine = pgTable(
     index("order_line_site_date_idx").on(t.siteId, t.shippedOn),
     index("order_line_sku_idx").on(t.skuId),
   ],
+);
+
+/**
+ * A rack layout for a site. The editable objects live in one JSON document
+ * (validated by layoutDocSchema) so the editor can save a whole scene in a
+ * single write; floor size is stored alongside for the scene bounds.
+ */
+export const layout = pgTable(
+  "layout",
+  {
+    id: text("id").primaryKey(),
+    siteId: text("site_id")
+      .notNull()
+      .references(() => site.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    floorWidth: real("floor_width").notNull(),
+    floorDepth: real("floor_depth").notNull(),
+    doc: jsonb("doc").$type<LayoutDoc>().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("layout_site_idx").on(t.siteId)],
 );

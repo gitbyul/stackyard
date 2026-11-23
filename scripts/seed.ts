@@ -11,6 +11,8 @@ import { createAuth } from "../src/lib/auth/config";
 import { DEMO_USER } from "../src/lib/auth/demo";
 import { createDb } from "../src/lib/db/client";
 import * as s from "../src/lib/db/schema";
+import { generateRackField } from "../src/lib/layout/generate";
+import { floorFromArea } from "../src/lib/layout/model";
 
 const db = createDb();
 const auth = createAuth(db);
@@ -114,6 +116,18 @@ async function main() {
     for (const site of p.sites) {
       const siteId = id("site");
       await db.insert(s.site).values({ id: siteId, projectId, ...site });
+
+      // Starting layout: the generator's conventional rack field for this site.
+      const floor = floorFromArea(site.floorArea);
+      const rows = generateRackField(floor, { clearHeight: site.clearHeight, id: () => id("row") });
+      await db.insert(s.layout).values({
+        id: id("lay"),
+        siteId,
+        name: `${site.name}: base plan`,
+        floorWidth: floor.width,
+        floorDepth: floor.depth,
+        doc: { version: 1, rows },
+      });
 
       // SKUs with a Pareto-like demand weight: few fast movers, long tail.
       const skus = Array.from({ length: SKUS_PER_SITE }, (_, i) => {

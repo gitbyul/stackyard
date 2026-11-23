@@ -1,4 +1,4 @@
-import { ArrowLeft, ChartColumnBig, DoorOpen, MoveVertical, Ruler } from "lucide-react";
+import { ArrowLeft, Boxes, ChartColumnBig, DoorOpen, MoveVertical, Ruler } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -7,6 +7,7 @@ import { ProjectStatusBadge } from "@/components/app/project-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { layoutIdsBySite } from "@/lib/data/layouts";
 import { getProject } from "@/lib/data/projects";
 import { formatDate, formatNumber } from "@/lib/format";
 
@@ -30,6 +31,7 @@ export default function ProjectPage({ params }: PageProps<"/projects/[projectId]
 async function ProjectDetail({ params }: Pick<PageProps<"/projects/[projectId]">, "params">) {
   const { projectId } = await params;
   const p = await getProject(projectId);
+  const layoutBySite = await layoutIdsBySite(p.sites.map((s) => s.id));
 
   return (
     <>
@@ -69,11 +71,20 @@ async function ProjectDetail({ params }: Pick<PageProps<"/projects/[projectId]">
                     <Spec icon={DoorOpen} label="Dock doors" value={formatNumber(site.dockDoors)} />
                     <Spec label="SKUs" value={formatNumber(site.skuCount)} />
                   </dl>
-                  <Button variant="outline" size="sm" className="mt-4" asChild>
-                    <Link href={`/analysis?site=${site.id}`}>
-                      <ChartColumnBig /> Analyse movement
-                    </Link>
-                  </Button>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/analysis?site=${site.id}`}>
+                        <ChartColumnBig /> Analyse movement
+                      </Link>
+                    </Button>
+                    {layoutBySite.has(site.id) && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/studio/${layoutBySite.get(site.id)}`}>
+                          <Boxes /> Open layout
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
