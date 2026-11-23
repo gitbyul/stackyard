@@ -13,6 +13,7 @@ import { createDb } from "../src/lib/db/client";
 import * as s from "../src/lib/db/schema";
 import { generateRackField } from "../src/lib/layout/generate";
 import { floorFromArea } from "../src/lib/layout/model";
+import { currentStateTemplate } from "../src/lib/process-map/template";
 import { benchmarkFor, PROCESSES } from "../src/lib/productivity/benchmarks";
 
 const db = createDb();
@@ -178,6 +179,18 @@ async function main() {
     for (const site of p.sites) {
       const siteId = id("site");
       await db.insert(s.site).values({ id: siteId, projectId, ...site });
+
+      // Current-state process map, saved as version 1.
+      const mapId = id("map");
+      await db.insert(s.processMap).values({ id: mapId, siteId, name: `${site.name}: inbound to outbound` });
+      await db.insert(s.processMapVersion).values({
+        id: id("mapv"),
+        mapId,
+        number: 1,
+        doc: currentStateTemplate(() => id("step")),
+        note: "Current-state map from site walk",
+        authorId: user.id,
+      });
 
       // Starting layout: the generator's conventional rack field for this site.
       const floor = floorFromArea(site.floorArea);

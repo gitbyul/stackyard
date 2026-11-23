@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { LayoutDoc } from "@/lib/layout/model";
+import type { MapDoc } from "@/lib/process-map/model";
 import { PROCESSES } from "@/lib/productivity/benchmarks";
 
 /* ------------------------------------------------------------------ */
@@ -208,4 +209,38 @@ export const laborLog = pgTable(
     volume: integer("volume").notNull(),
   },
   (t) => [index("labor_log_site_date_idx").on(t.siteId, t.workDate)],
+);
+
+/** A process map (flow diagram) for a site. Content lives in its versions. */
+export const processMap = pgTable(
+  "process_map",
+  {
+    id: text("id").primaryKey(),
+    siteId: text("site_id")
+      .notNull()
+      .references(() => site.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("process_map_site_idx").on(t.siteId)],
+);
+
+/**
+ * Immutable history: every save adds a numbered version. Restoring an old
+ * version saves it again as the newest, so history is never rewritten.
+ */
+export const processMapVersion = pgTable(
+  "process_map_version",
+  {
+    id: text("id").primaryKey(),
+    mapId: text("map_id")
+      .notNull()
+      .references(() => processMap.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    doc: jsonb("doc").$type<MapDoc>().notNull(),
+    note: text("note").notNull().default(""),
+    authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("process_map_version_number_uq").on(t.mapId, t.number)],
 );

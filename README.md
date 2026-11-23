@@ -11,6 +11,7 @@
 | Framework | Next.js 16 (App Router, Cache Components, Partial Prefetching) · React 19 · TypeScript |
 | UI | Tailwind CSS v4 · shadcn/ui (Radix) · lucide icons · Recharts |
 | 3D | three.js · React Three Fiber · drei · zustand (editor state) |
+| Diagrams | React Flow (@xyflow/react) |
 | Data | PostgreSQL via Drizzle ORM: **Neon** in production, embedded **PGlite** locally |
 | Auth | Better Auth (email + password, cookie-cached sessions), Next.js `proxy.ts` gate |
 | Hosting | Vercel (Hobby/free tier) |
@@ -57,7 +58,7 @@ src/
     page.tsx               public landing page (static)
     login/                 sign-in page + server actions (demo login)
     (app)/                 signed-in shell: sidebar + pages
-      dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/
+      dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
     api/auth/[...all]/     Better Auth handler
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
@@ -65,6 +66,7 @@ src/
   components/slotting/     slotting view, worker hook, 3D slot plan
   components/three/        shared 3D pieces: site floor, docks, camera fitting
   components/productivity/ filters, status badge, weekly trend chart
+  components/process/      process map editor and step node
   components/ui/           shadcn/ui primitives
   lib/auth/                Better Auth config, session helpers, demo account
   lib/db/                  Drizzle schema + driver selection (Neon / PGlite)
@@ -72,6 +74,7 @@ src/
   lib/layout/              layout model, rack-field generator, stats/validation + tests
   lib/slotting/            locations + travel cost, sizing, solver, Web Worker + tests
   lib/productivity/        reference rates, performance index, weekly series + tests
+  lib/process-map/         map model, flow analysis, auto-layout, seed template + tests
   lib/data/                data access layer, always scoped to the signed-in user
   proxy.ts                 optimistic redirect to /login
 scripts/                   migrate + seed
@@ -87,5 +90,5 @@ drizzle/                   generated SQL migrations
 - [ ] Layout studio: GPU id-buffer picking, aisles/zones, 2D DXF export
 - [x] Slotting: cube-per-order / velocity solver in a Web Worker, compared with a by-code baseline, 3D slot plan and CSV export
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
-- [ ] Process maps
+- [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
 - [ ] i18n (ko/en), landing polish, deployment
