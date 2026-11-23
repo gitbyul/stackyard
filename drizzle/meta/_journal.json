@@ -15,6 +15,13 @@
       "when": 1795449164413,
       "tag": "0001_layout",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795451886056,
+      "tag": "0002_labor_log",
+      "breakpoints": true
     }
   ]
 }

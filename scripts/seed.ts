@@ -13,6 +13,7 @@ import { createDb } from "../src/lib/db/client";
 import * as s from "../src/lib/db/schema";
 import { generateRackField } from "../src/lib/layout/generate";
 import { floorFromArea } from "../src/lib/layout/model";
+import { benchmarkFor, PROCESSES } from "../src/lib/productivity/benchmarks";
 
 const db = createDb();
 const auth = createAuth(db);
@@ -88,6 +89,66 @@ async function insertChunked<T extends Record<string, unknown>>(
   }
 }
 
+/**
+ * Labour records per day, shift and process. Volumes come from the day's
+ * outbound work; rates are the industry reference scaled by a per-site
+ * factor, a gentle trend over the period, a night-shift penalty and noise.
+ * Hours = volume ÷ rate, so productivity can be recomputed from the log.
+ */
+function laborFor(
+  siteId: string,
+  industry: string,
+  lines: (typeof s.orderLine.$inferInsert)[],
+): (typeof s.laborLog.$inferInsert)[] {
+  const bench = benchmarkFor(industry);
+  const siteFactor = Object.fromEntries(PROCESSES.map((pr) => [pr, 0.78 + rand() * 0.4]));
+  const trendSlope = -0.08 + rand() * 0.24; // most sites improve a little
+
+  const byDay = new Map<string, { lines: number; orders: Set<string>; units: number }>();
+  for (const l of lines) {
+    const d = byDay.get(l.shippedOn) ?? { lines: 0, orders: new Set<string>(), units: 0 };
+    d.lines++;
+    d.orders.add(l.orderNo);
+    d.units += l.quantity;
+    byDay.set(l.shippedOn, d);
+  }
+
+  const days = [...byDay.keys()].sort();
+  const out: (typeof s.laborLog.$inferInsert)[] = [];
+  days.forEach((day, i) => {
+    const d = byDay.get(day)!;
+    const pallets = Math.max(1, Math.ceil(d.units / 60));
+    const inbound = Math.max(1, Math.round(pallets * (0.9 + rand() * 0.2)));
+    const volume: Record<(typeof PROCESSES)[number], number> = {
+      receiving: inbound,
+      putaway: inbound,
+      picking: d.lines,
+      packing: d.orders.size,
+      shipping: pallets,
+    };
+    const trend = 1 + trendSlope * (i / Math.max(1, days.length - 1) - 0.5);
+    for (const shift of ["day", "night"] as const) {
+      const share = shift === "day" ? 0.65 : 0.35;
+      const shiftFactor = shift === "day" ? 1 : 0.9;
+      for (const process of PROCESSES) {
+        const v = Math.round(volume[process] * share);
+        if (v === 0) continue;
+        const rate = bench[process] * siteFactor[process] * trend * shiftFactor * (0.88 + rand() * 0.24);
+        out.push({
+          id: id("lab"),
+          siteId,
+          workDate: day,
+          shift,
+          process,
+          volume: v,
+          hours: Math.max(0.25, Math.round((v / rate) * 4) / 4),
+        });
+      }
+    }
+  });
+  return out;
+}
+
 async function main() {
   console.log("• clearing previous sample data");
   await db.delete(s.project);
@@ -98,6 +159,7 @@ async function main() {
 
   let skuTotal = 0;
   let lineTotal = 0;
+  let laborTotal = 0;
 
   for (const p of PROJECTS) {
     const projectId = id("prj");
@@ -190,11 +252,20 @@ async function main() {
       }
       await insertChunked(s.orderLine, lines);
       lineTotal += lines.length;
-      console.log(`  ✓ ${p.client} / ${site.name}: ${skus.length} SKUs, ${lines.length} order lines`);
+
+      // Labour log derived from the same days' outbound work.
+      const labor = laborFor(siteId, p.industry, lines);
+      await insertChunked(s.laborLog, labor);
+      laborTotal += labor.length;
+      console.log(
+        `  ✓ ${p.client} / ${site.name}: ${skus.length} SKUs, ${lines.length} order lines, ${labor.length} labour records`,
+      );
     }
   }
 
-  console.log(`✓ seeded ${PROJECTS.length} projects, ${skuTotal} SKUs, ${lineTotal} order lines`);
+  console.log(
+    `✓ seeded ${PROJECTS.length} projects, ${skuTotal} SKUs, ${lineTotal} order lines, ${laborTotal} labour records`,
+  );
   console.log(`  demo login: ${DEMO_USER.email}`);
 }
 

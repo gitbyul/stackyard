@@ -26,6 +26,6 @@ export const MODULE_NAV: NavItem[] = [
   { title: "Movement analysis", href: "/analysis", icon: ChartColumnBig },
   { title: "Layout studio", href: "/studio", icon: Boxes },
   { title: "Slotting", href: "/slotting", icon: Route },
-  { title: "Productivity", href: "/productivity", icon: Gauge, soon: true },
+  { title: "Productivity", href: "/productivity", icon: Gauge },
   { title: "Process maps", href: "/process", icon: Workflow, soon: true },
 ];

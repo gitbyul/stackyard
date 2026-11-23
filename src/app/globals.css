@@ -82,6 +82,18 @@
   --abc-a-ink: #ffffff;
   --abc-b-ink: #ffffff;
   --abc-c-ink: #0b0b0b;
+  /* Categorical series 1–5 (validated, fixed order) and status colours. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --status-good: #0ca30c;
+  --status-good-ink: #006300;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
+  --diverging-up: #2a78d6;
+  --diverging-down: #e34948;
   --chart-1: oklch(0.78 0.16 75);
   --chart-2: oklch(0.55 0.11 200);
   --chart-3: oklch(0.42 0.09 258);
@@ -126,6 +138,17 @@
   --abc-a-ink: #0b0b0b;
   --abc-b-ink: #0b0b0b;
   --abc-c-ink: #ffffff;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --status-good: #0ca30c;
+  --status-good-ink: #0ca30c;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
+  --diverging-up: #3987e5;
+  --diverging-down: #e66767;
   --chart-1: oklch(0.8 0.16 75);
   --chart-2: oklch(0.7 0.12 200);
   --chart-3: oklch(0.7 0.09 258);

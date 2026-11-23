@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { LayoutDoc } from "@/lib/layout/model";
+import { PROCESSES } from "@/lib/productivity/benchmarks";
 
 /* ------------------------------------------------------------------ */
 /* Auth tables (shape required by Better Auth's core schema)          */
@@ -182,4 +183,29 @@ export const layout = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [index("layout_site_idx").on(t.siteId)],
+);
+
+export const shiftKind = pgEnum("shift_kind", ["day", "night"]);
+export const processKind = pgEnum("process_kind", PROCESSES);
+
+/**
+ * Labour log: hours worked and work completed per site, day, shift and
+ * process. The raw input for productivity benchmarks.
+ */
+export const laborLog = pgTable(
+  "labor_log",
+  {
+    id: text("id").primaryKey(),
+    siteId: text("site_id")
+      .notNull()
+      .references(() => site.id, { onDelete: "cascade" }),
+    workDate: date("work_date").notNull(),
+    shift: shiftKind("shift").notNull(),
+    process: processKind("process").notNull(),
+    /** Labour hours (headcount × hours). */
+    hours: real("hours").notNull(),
+    /** Units of work completed, in the process's own unit. */
+    volume: integer("volume").notNull(),
+  },
+  (t) => [index("labor_log_site_date_idx").on(t.siteId, t.workDate)],
 );
