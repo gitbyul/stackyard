@@ -19,6 +19,8 @@ const COLORS = {
   flagged: new THREE.Color("#d03b3b"),
   palletA: new THREE.Color("#c9a77a"),
   palletB: new THREE.Color("#b89263"),
+  // Loads in the selected row, so the selection reads from the top view too.
+  palletSelected: new THREE.Color("#f7cf6a"),
 };
 
 const UPRIGHT_W = 0.09;
@@ -156,8 +158,11 @@ export function RackInstances({
   const beams = useInstances(built.beams, frameColor(COLORS.beam), [built, selectedId, hoveredId, flagged]);
   const pallets = useInstances(
     built.pallets,
-    (part) => ((part as Built["pallets"][number]).tone > 0.43 ? COLORS.palletA : COLORS.palletB),
-    [built],
+    (part) => {
+      if (rows[part.row].id === selectedId) return COLORS.palletSelected;
+      return (part as Built["pallets"][number]).tone > 0.43 ? COLORS.palletA : COLORS.palletB;
+    },
+    [built, selectedId],
   );
 
   // Capacity is fixed per mesh instance, so remount when the layout grows.

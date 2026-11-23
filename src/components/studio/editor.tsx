@@ -147,8 +147,9 @@ function useShortcuts(onSave: () => void) {
   const api = useStudioApi();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t && (t.closest("input, textarea, select, [contenteditable='true']") || t.isContentEditable)) return;
+      // Leave typing in form fields alone. The target isn't always an element.
+      const t = e.target;
+      if (t instanceof Element && t.closest("input, textarea, select, [contenteditable='true']")) return;
       const s = api.getState();
       const mod = e.metaKey || e.ctrlKey;
       const key = e.key.toLowerCase();

@@ -34,7 +34,7 @@ function RowHitBoxes({ rows }: { rows: RackRow[] }) {
     if (controls) controls.enabled = on;
   };
   const ref = useRef<THREE.InstancedMesh>(null);
-  const drag = useRef<{ id: string; dx: number; dz: number; moved: boolean } | null>(null);
+  const drag = useRef<{ id: string; dx: number; dz: number } | null>(null);
 
   useLayoutEffect(() => {
     const mesh = ref.current;
@@ -65,15 +65,21 @@ function RowHitBoxes({ rows }: { rows: RackRow[] }) {
           e.stopPropagation();
           const p = floorPoint(e);
           if (!p) return;
-          drag.current.moved = true;
           api.getState().dragTo(p.x + drag.current.dx, p.z + drag.current.dz);
           return;
         }
         e.stopPropagation();
-        api.getState().hover(rowAt(e)?.id ?? null);
+        const row = rowAt(e);
+        api.getState().hover(row?.id ?? null);
+        // MapControls handles pointerdown on the canvas before R3F's handlers
+        // run, so it must already be off while the pointer is over a row;
+        // otherwise pressing on a row would start a pan instead of a drag.
+        setControlsEnabled(!row);
       }}
       onPointerOut={() => {
-        if (!drag.current) api.getState().hover(null);
+        if (drag.current) return;
+        api.getState().hover(null);
+        setControlsEnabled(true);
       }}
       // Clicks on a row must not reach the floor, which clears the selection.
       onClick={(e) => e.stopPropagation()}
@@ -85,7 +91,7 @@ function RowHitBoxes({ rows }: { rows: RackRow[] }) {
         const p = floorPoint(e);
         if (!p) return;
         (e.target as Element).setPointerCapture(e.pointerId);
-        drag.current = { id: row.id, dx: row.x - p.x, dz: row.z - p.z, moved: false };
+        drag.current = { id: row.id, dx: row.x - p.x, dz: row.z - p.z };
         setControlsEnabled(false);
         api.getState().beginDrag(row.id);
       }}
@@ -179,20 +185,36 @@ function CameraRig({ floor }: { floor: Floor }) {
     const controls = getThree().controls as unknown as Controls | null;
     const cx = floor.width / 2;
     const cz = floor.depth / 2;
-    // Distance at which the whole floor fits the viewport for this fov/aspect.
-    const fov = THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov ?? 45);
-    const aspect = size.width / Math.max(1, size.height);
-    const t = Math.tan(fov / 2);
-    const fit = Math.max(floor.depth / 2 / t, floor.width / 2 / (t * aspect)) * 1.08;
-    if (request.view === "top") {
-      camera.position.set(cx, fit, cz + 0.01);
-    } else {
-      const dir = new THREE.Vector3(-0.35, 0.8, 0.9).normalize();
-      camera.position.set(cx + dir.x * fit, dir.y * fit, cz + dir.z * fit);
+    const target = new THREE.Vector3(cx, 0, cz);
+    const dir =
+      request.view === "top"
+        ? new THREE.Vector3(0, 1, 0.0001).normalize()
+        : new THREE.Vector3(-0.35, 0.8, 0.9).normalize();
+
+    // Walk the camera back along `dir` until the floor and the tops of the
+    // tallest racks all land inside the viewport. A closed-form fit only
+    // works for a straight-down view; this handles the oblique one too.
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.aspect = size.width / size.height;
+    const corners = [0, floor.width].flatMap((x) =>
+      [0, floor.depth].flatMap((z) => [0, 12].map((y) => new THREE.Vector3(x, y, z))),
+    );
+    const v = new THREE.Vector3();
+    let dist = Math.max(floor.width, floor.depth) * 0.5;
+    for (let i = 0; i < 60; i++) {
+      cam.position.copy(target).addScaledVector(dir, dist);
+      cam.lookAt(target);
+      cam.far = dist * 4;
+      cam.updateProjectionMatrix();
+      cam.updateMatrixWorld();
+      const fits = corners.every((c) => {
+        v.copy(c).project(cam);
+        return Math.abs(v.x) <= 0.92 && Math.abs(v.y) <= 0.92;
+      });
+      if (fits) break;
+      dist *= 1.08;
     }
-    camera.far = fit * 4;
-    camera.updateProjectionMatrix();
-    controls?.target.set(cx, 0, cz);
+    controls?.target.copy(target);
     controls?.update();
     invalidate();
   }, [request, floor, getThree, hasControls, measured]);
