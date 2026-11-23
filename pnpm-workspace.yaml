@@ -1,4 +1,6 @@
 allowBuilds:
+  # esbuild ships prebuilt platform binaries; its postinstall check is not needed.
+  esbuild: false
   sharp: false
   unrs-resolver: false
 minimumReleaseAgeExclude:
