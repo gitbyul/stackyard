@@ -55,3 +55,10 @@ export function floorFromArea(area: number): Floor {
   const width = Math.round(Math.sqrt(area * 1.6));
   return { width, depth: Math.round(area / width) };
 }
+
+/** Dock door centres along the front wall (z = depth), evenly spaced. */
+export function dockPositions(floor: Floor, doors: number): number[] {
+  const n = Math.max(0, Math.floor(doors));
+  const spacing = floor.width / (n + 1);
+  return Array.from({ length: n }, (_, i) => spacing * (i + 1));
+}

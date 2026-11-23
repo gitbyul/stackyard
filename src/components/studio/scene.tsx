@@ -2,15 +2,13 @@
 
 import { Html, MapControls } from "@react-three/drei";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 
+import { FitCamera, SiteFloor, type Controls } from "@/components/three/site-floor";
 import { rowLength, type Floor, type RackRow } from "@/lib/layout/model";
 import { RackInstances } from "./rack-instances";
 import { useStudio, useStudioApi } from "./store";
-
-/** The bits of drei's MapControls we touch. */
-type Controls = { enabled: boolean; target: THREE.Vector3; update: () => void };
 
 const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const hitPoint = new THREE.Vector3();
@@ -110,115 +108,9 @@ function RowHitBoxes({ rows }: { rows: RackRow[] }) {
   );
 }
 
-function FloorAndWalls({ floor, dockDoors }: { floor: Floor; dockDoors: number }) {
-  const api = useStudioApi();
-  const grid = useMemo(() => {
-    const size = Math.ceil(Math.max(floor.width, floor.depth) / 10) * 10;
-    const g = new THREE.GridHelper(size, size / 2, "#9aa6b5", "#d5dbe3");
-    g.position.set(size / 2, 0.005, size / 2);
-    (g.material as THREE.Material).transparent = true;
-    (g.material as THREE.Material).opacity = 0.5;
-    g.raycast = () => {};
-    return g;
-  }, [floor]);
-
-  const outline = useMemo(() => {
-    const pts = [
-      [0, 0],
-      [floor.width, 0],
-      [floor.width, floor.depth],
-      [0, floor.depth],
-      [0, 0],
-    ].map(([x, z]) => new THREE.Vector3(x, 0.02, z));
-    return new THREE.BufferGeometry().setFromPoints(pts);
-  }, [floor]);
-
-  // Dock doors spread evenly along the front wall (z = depth).
-  const docks = useMemo(() => {
-    const n = Math.max(0, dockDoors);
-    const spacing = floor.width / (n + 1);
-    return Array.from({ length: n }, (_, i) => spacing * (i + 1));
-  }, [floor, dockDoors]);
-
-  return (
-    <group>
-      <mesh
-        rotation-x={-Math.PI / 2}
-        position={[floor.width / 2, 0, floor.depth / 2]}
-        onClick={(e) => {
-          if (e.delta < 4) api.getState().select(null);
-        }}
-      >
-        <planeGeometry args={[floor.width, floor.depth]} />
-        <meshStandardMaterial color="#eef1f5" />
-      </mesh>
-      <primitive object={grid} />
-      <lineSegments geometry={outline}>
-        <lineBasicMaterial color="#5b6b80" />
-      </lineSegments>
-      {/* Dock staging zone hint */}
-      <mesh rotation-x={-Math.PI / 2} position={[floor.width / 2, 0.01, floor.depth - 9]} raycast={() => null}>
-        <planeGeometry args={[floor.width, 18]} />
-        <meshBasicMaterial color="#f5b220" transparent opacity={0.08} />
-      </mesh>
-      {docks.map((x) => (
-        <mesh key={x} position={[x, 1.6, floor.depth + 0.15]} raycast={() => null}>
-          <boxGeometry args={[3, 3.2, 0.3]} />
-          <meshStandardMaterial color="#5b6b80" />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 function CameraRig({ floor }: { floor: Floor }) {
   const request = useStudio((s) => s.cameraRequest);
-  const getThree = useThree((s) => s.get);
-  // Re-run once MapControls has registered itself as the default controls.
-  const hasControls = useThree((s) => s.controls !== null);
-  // …and once the canvas has been measured; a 0×0 size would give an infinite distance.
-  const measured = useThree((s) => s.size.width > 0 && s.size.height > 0);
-
-  useEffect(() => {
-    if (!measured) return;
-    const { camera, invalidate, size } = getThree();
-    const controls = getThree().controls as unknown as Controls | null;
-    const cx = floor.width / 2;
-    const cz = floor.depth / 2;
-    const target = new THREE.Vector3(cx, 0, cz);
-    const dir =
-      request.view === "top"
-        ? new THREE.Vector3(0, 1, 0.0001).normalize()
-        : new THREE.Vector3(-0.35, 0.8, 0.9).normalize();
-
-    // Walk the camera back along `dir` until the floor and the tops of the
-    // tallest racks all land inside the viewport. A closed-form fit only
-    // works for a straight-down view; this handles the oblique one too.
-    const cam = camera as THREE.PerspectiveCamera;
-    cam.aspect = size.width / size.height;
-    const corners = [0, floor.width].flatMap((x) =>
-      [0, floor.depth].flatMap((z) => [0, 12].map((y) => new THREE.Vector3(x, y, z))),
-    );
-    const v = new THREE.Vector3();
-    let dist = Math.max(floor.width, floor.depth) * 0.5;
-    for (let i = 0; i < 60; i++) {
-      cam.position.copy(target).addScaledVector(dir, dist);
-      cam.lookAt(target);
-      cam.far = dist * 4;
-      cam.updateProjectionMatrix();
-      cam.updateMatrixWorld();
-      const fits = corners.every((c) => {
-        v.copy(c).project(cam);
-        return Math.abs(v.x) <= 0.92 && Math.abs(v.y) <= 0.92;
-      });
-      if (fits) break;
-      dist *= 1.08;
-    }
-    controls?.target.copy(target);
-    controls?.update();
-    invalidate();
-  }, [request, floor, getThree, hasControls, measured]);
-  return null;
+  return <FitCamera floor={floor} view={request.view} requestKey={request.n} />;
 }
 
 function SelectedLabel({ rows, selectedId }: { rows: RackRow[]; selectedId: string | null }) {
@@ -234,6 +126,7 @@ function SelectedLabel({ rows, selectedId }: { rows: RackRow[]; selectedId: stri
 }
 
 export function StudioScene({ dockDoors, flagged }: { dockDoors: number; flagged: Set<string> }) {
+  const api = useStudioApi();
   const floor = useStudio((s) => s.floor);
   const rows = useStudio((s) => s.rows);
   const selectedId = useStudio((s) => s.selectedId);
@@ -254,7 +147,7 @@ export function StudioScene({ dockDoors, flagged }: { dockDoors: number; flagged
       <directionalLight position={[floor.width * 0.3, 60, floor.depth * 1.2]} intensity={1.4} />
       <MapControls makeDefault enableDamping={false} maxPolarAngle={Math.PI / 2.1} screenSpacePanning={false} />
       <CameraRig floor={floor} />
-      <FloorAndWalls floor={floor} dockDoors={dockDoors} />
+      <SiteFloor floor={floor} dockDoors={dockDoors} onFloorClick={() => api.getState().select(null)} />
       <RackInstances
         rows={rows}
         selectedId={selectedId}
