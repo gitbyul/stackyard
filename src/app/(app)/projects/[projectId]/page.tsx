@@ -1,4 +1,4 @@
-import { ArrowLeft, DoorOpen, MoveVertical, Ruler } from "lucide-react";
+import { ArrowLeft, ChartColumnBig, DoorOpen, MoveVertical, Ruler } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -69,6 +69,11 @@ async function ProjectDetail({ params }: Pick<PageProps<"/projects/[projectId]">
                     <Spec icon={DoorOpen} label="Dock doors" value={formatNumber(site.dockDoors)} />
                     <Spec label="SKUs" value={formatNumber(site.skuCount)} />
                   </dl>
+                  <Button variant="outline" size="sm" className="mt-4" asChild>
+                    <Link href={`/analysis?site=${site.id}`}>
+                      <ChartColumnBig /> Analyse movement
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             ))}

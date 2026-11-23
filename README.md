@@ -35,6 +35,7 @@ With `DATABASE_URL` empty, the app uses an embedded PGlite database in `.data/`,
 | `pnpm dev` / `build` / `start` | Next.js |
 | `pnpm typecheck` | Generate route types, then `tsc --noEmit` |
 | `pnpm lint` | ESLint |
+| `pnpm test` | Unit tests (Vitest) |
 | `pnpm db:generate` | Create a SQL migration from `src/lib/db/schema.ts` |
 | `pnpm db:migrate` | Apply migrations (Neon or PGlite, picked from `DATABASE_URL`) |
 | `pnpm db:seed` | Reset sample data + demo user (deterministic) |
@@ -55,12 +56,14 @@ src/
     page.tsx               public landing page (static)
     login/                 sign-in page + server actions (demo login)
     (app)/                 signed-in shell: sidebar + pages
-      dashboard/  projects/  projects/[projectId]/
+      dashboard/  projects/  projects/[projectId]/  analysis/
     api/auth/[...all]/     Better Auth handler
   components/app/          app-level components (sidebar, header, badges)
+  components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
   components/ui/           shadcn/ui primitives
   lib/auth/                Better Auth config, session helpers, demo account
   lib/db/                  Drizzle schema + driver selection (Neon / PGlite)
+  lib/analysis/            pure analysis logic (ABC classification) + unit tests
   lib/data/                data access layer, always scoped to the signed-in user
   proxy.ts                 optimistic redirect to /login
 scripts/                   migrate + seed
@@ -70,7 +73,8 @@ drizzle/                   generated SQL migrations
 ## Roadmap
 
 - [x] Foundation: auth, app shell, projects/sites, sample data
-- [ ] Movement analysis: ABC velocity, order profiles, SKU mix
+- [x] Movement analysis: ABC classification by units or order lines, Pareto curve, units × lines matrix, CSV export
+- [ ] Movement analysis: order profiles, SKU mix
 - [ ] Layout studio: instanced Three.js editor with GPU picking
 - [ ] Auto-slotting: placement solver in a Web Worker
 - [ ] Productivity benchmarks

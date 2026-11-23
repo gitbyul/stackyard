@@ -7,6 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-signal: var(--signal);
+  --color-abc-a: var(--abc-a);
+  --color-abc-b: var(--abc-b);
+  --color-abc-c: var(--abc-c);
   --color-signal-foreground: var(--signal-foreground);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -72,6 +75,13 @@
   --ring: oklch(0.6 0.08 258);
   --signal: oklch(0.8 0.16 75);
   --signal-foreground: oklch(0.25 0.05 60);
+  /* ABC classes: one-hue ordinal ramp (validated, light surface). */
+  --abc-a: #184f95;
+  --abc-b: #3987e5;
+  --abc-c: #86b6ef;
+  --abc-a-ink: #ffffff;
+  --abc-b-ink: #ffffff;
+  --abc-c-ink: #0b0b0b;
   --chart-1: oklch(0.78 0.16 75);
   --chart-2: oklch(0.55 0.11 200);
   --chart-3: oklch(0.42 0.09 258);
@@ -109,6 +119,13 @@
   --ring: oklch(0.65 0.1 75);
   --signal: oklch(0.8 0.16 75);
   --signal-foreground: oklch(0.22 0.04 60);
+  /* ABC classes on dark: brightest = most movement (validated, dark surface). */
+  --abc-a: #cde2fb;
+  --abc-b: #5598e7;
+  --abc-c: #1c5cab;
+  --abc-a-ink: #0b0b0b;
+  --abc-b-ink: #0b0b0b;
+  --abc-c-ink: #ffffff;
   --chart-1: oklch(0.8 0.16 75);
   --chart-2: oklch(0.7 0.12 200);
   --chart-3: oklch(0.7 0.09 258);
