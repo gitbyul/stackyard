@@ -45,8 +45,9 @@ With `DATABASE_URL` empty, the app uses an embedded PGlite database in `.data/`,
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`:
-unit tests, ESLint, typecheck and a production build (Node 24, pnpm from
-`packageManager`). Vercel deploys separately through its Git integration.
+unit tests, ESLint, typecheck and a production build (pnpm from
+`packageManager`), on Node 26 like local development and Vercel. Vercel deploys
+separately through its Git integration.
 
 ## Deploying to Vercel (free tier)
 
@@ -58,23 +59,21 @@ request after a pause takes a second or two).
    Framework preset: Next.js. Leave the build command as the default.
 2. **Use pnpm 12.** Under Settings → Environment Variables add
    `ENABLE_EXPERIMENTAL_COREPACK=1` so Vercel installs the pnpm version pinned in
-   `packageManager`. Under Settings → General set Node.js to **24.x**.
-3. **Add a database.** Storage → Marketplace → **Neon** → create and connect it
-   to the project. This sets `DATABASE_URL` for all environments.
+   `packageManager`. Keep Settings → Build and Deployment → Node.js at **26.x**.
+3. **Add a database.** Storage → Marketplace → **Neon** (Free plan, region close
+   to your Vercel functions, e.g. `us-east-1` for the default `iad1`) → connect
+   it to the project. This sets `DATABASE_URL`.
 4. **Add the auth secret.** Create `BETTER_AUTH_SECRET` (any random string of 32+
    characters, e.g. `openssl rand -base64 32`) for Production and Preview.
    Don't set `BETTER_AUTH_URL`; the app picks the production domain or the
    preview URL from Vercel's own variables.
-5. **Create the tables and demo data** once, from your machine, against Neon:
+5. **Deploy.** Push to `main` (or Redeploy). The `vercel-build` script applies
+   migrations, seeds the demo data **only if the database is empty**, then
+   builds, so nobody has to copy the connection string. Every pull request gets
+   its own preview URL.
 
-   ```bash
-   DATABASE_URL="postgres://…neon.tech/neondb?sslmode=require" BETTER_AUTH_SECRET="…" pnpm db:setup
-   ```
-
-   Re-running `pnpm db:seed` resets the demo data. Apply new migrations later
-   with `pnpm db:migrate` the same way.
-6. **Deploy.** Push to `main` for production; every pull request gets its own
-   preview URL.
+To reset the demo data later, run `pnpm db:seed` locally with the Neon
+`DATABASE_URL` and `BETTER_AUTH_SECRET` in your environment.
 
 ## Project layout
 

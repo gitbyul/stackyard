@@ -13,7 +13,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "vercel-build": "pnpm db:migrate && tsx scripts/seed.ts --if-empty && next build"
   },
   "dependencies": {
     "@electric-sql/pglite": "0.6.0",
