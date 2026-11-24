@@ -1,6 +1,7 @@
 import {
   Boxes,
   ChartColumnBig,
+  Database,
   FolderKanban,
   Gauge,
   LayoutDashboard,
@@ -24,6 +25,7 @@ export type NavItem = {
 export const WORKSPACE_NAV: NavItem[] = [
   { key: "overview", href: "/dashboard", icon: LayoutDashboard },
   { key: "projects", href: "/projects", icon: FolderKanban },
+  { key: "data", href: "/data", icon: Database },
 ];
 
 export const MODULE_NAV: NavItem[] = [

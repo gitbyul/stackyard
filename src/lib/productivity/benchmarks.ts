@@ -23,6 +23,9 @@ export const BENCHMARKS: Record<string, Record<Process, number>> = {
   "Automotive Aftermarket": { receiving: 24, putaway: 16, picking: 70, packing: 35, shipping: 22 },
 };
 
+/** Industries a project can be filed under; anything without its own rates uses the default. */
+export const INDUSTRIES = ["Food & Grocery", "Fashion", "Automotive Aftermarket", "General"] as const;
+
 export const DEFAULT_BENCHMARK: Record<Process, number> = {
   receiving: 28,
   putaway: 20,

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isLocale, LOCALE_COOKIE, localeFromPath, negotiateLocale } from "@/i18n/config";
 
 /** App sections that need a signed-in user (after the /{lang} prefix). */
-const PROTECTED = ["dashboard", "projects", "analysis", "studio", "slotting", "productivity", "process"];
+const PROTECTED = ["dashboard", "projects", "analysis", "studio", "slotting", "productivity", "process", "data"];
 
 /**
  * 1. Paths without a locale are redirected to one: the remembered choice from
