@@ -5,18 +5,33 @@ import { nextCookies } from "better-auth/next-js";
 import type { Db } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
 
+/**
+ * The URL auth runs on. On Vercel, production uses the project's production
+ * domain; preview deployments use their own unique URL, otherwise sign-in
+ * from a preview would be checked against the production origin.
+ */
 function baseURL() {
-  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  const env = process.env;
+  if (env.BETTER_AUTH_URL) return env.BETTER_AUTH_URL;
+  if (env.VERCEL_ENV === "production" && env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
   return "http://localhost:3000";
+}
+
+/** Also accept the deployment's own URL and branch URL on Vercel. */
+function trustedOrigins() {
+  const env = process.env;
+  return [env.VERCEL_URL, env.VERCEL_BRANCH_URL, env.VERCEL_PROJECT_PRODUCTION_URL]
+    .filter((host): host is string => Boolean(host))
+    .map((host) => `https://${host}`);
 }
 
 /** Built as a factory so CLI scripts can create it without `server-only`. */
 export function createAuth(db: Db) {
   return betterAuth({
     baseURL: baseURL(),
+    trustedOrigins: trustedOrigins(),
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
