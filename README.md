@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/gitbyul/stackyard/actions/workflows/ci.yml/badge.svg)](https://github.com/gitbyul/stackyard/actions/workflows/ci.yml)
 
-**Live demo: [stackyard-byul3.vercel.app](https://stackyard-byul3.vercel.app)**. Choose *Explore the demo workspace* to sign in.
+**Live demo: [stackyard-seven.vercel.app](https://stackyard-seven.vercel.app)**. Choose *Explore the demo workspace* to sign in.
 
 **Warehouse design studio**: turn raw order lines into storage decisions. Analyse SKU movement, size the racking, and lay out a distribution center in an interactive 3D studio.
 
@@ -75,6 +75,11 @@ request after a pause takes a second or two).
    migrations, seeds the demo data **only if the database is empty**, then
    builds, so nobody has to copy the connection string. Every pull request gets
    its own preview URL.
+
+Share the project's production domain (Settings → Domains). With Vercel's
+default Standard Protection, other deployment URLs such as
+`<project>-<team>.vercel.app` or per-commit URLs ask visitors to sign in to
+Vercel.
 
 To reset the demo data later, run `pnpm db:seed` locally with the Neon
 `DATABASE_URL` and `BETTER_AUTH_SECRET` in your environment.
