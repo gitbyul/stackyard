@@ -86,6 +86,15 @@ User data such as project and site names is not translated. The social preview i
 
 To add a language: append it to `LOCALES` in `src/i18n/config.ts`, add a dictionary that satisfies `Dictionary`, and register it in `src/i18n/dictionaries/index.ts`.
 
+## Not-found pages
+
+Unknown URLs and detail pages (a project, a layout in the studio, a process map) that don't exist or belong to another account answer with a real **HTTP 404** and a localized "Page not found" screen.
+
+- With Cache Components the prerendered shell is sent first, which fixes the status at `200`; a `notFound()` inside the page would only show the 404 UI (with `noindex`). So `proxy.ts` checks detail URLs **before** anything streams: one indexed query matches the session cookie's token against a live session and the item's owner (`src/lib/access/detail.ts`).
+- If the check fails, the request is rewritten to the catch-all route `[lang]/[...missing]`, whose `notFound()` runs while prerendering and therefore keeps the 404 status. `[lang]/not-found.tsx` renders the message in the current language.
+- Pages still load the data through the owner-scoped data layer, so the proxy check is an early answer, not the only guard. Server actions (POST) are not checked there.
+- Next strips its router headers before Proxy, so link prefetches of detail pages run the same lookup; it is one primary-key query.
+
 ## Scripts
 
 | Script | What it does |
@@ -103,7 +112,9 @@ To add a language: append it to `LOCALES` in `src/i18n/config.ts`, add a diction
 `pnpm test` runs two kinds of tests:
 
 - **Unit tests** for the pure logic: ABC analysis, layout model and generator, slotting solver, productivity index, process-map analysis, CSV parsing and validation, sample data.
-- **Database tests** (`src/lib/projects/delete.test.ts`) that start an in-memory PGlite, apply the real migrations and check what unit tests can't: the daily demo reset (fills, replaces, leaves no staging rows, keeps other users' data) and project deletion (owner-only, cascades to everything under the project and nothing else). They clear `DATABASE_URL` first, so they never touch Neon.
+- **Database tests** that start an in-memory PGlite, apply the real migrations and check what unit tests can't. They clear `DATABASE_URL` first, so they never touch Neon.
+  - `src/lib/projects/delete.test.ts`: the daily demo reset (fills, replaces, leaves no staging rows, keeps other users' data) and project deletion (owner-only, cascades to everything under the project and nothing else).
+  - `src/lib/access/detail.test.ts`: who may open a project, layout or process map page (owner yes; other users, expired sessions, unknown tokens and missing ids no).
 
 ## Continuous integration
 
@@ -172,6 +183,8 @@ src/
   app/
     [lang]/                every page, prefixed with /en or /ko
       page.tsx             public landing page (static)
+      not-found.tsx        localized 404 screen
+      [...missing]/        catch-all that returns a real 404 (also the proxy's rewrite target)
       login/               sign-in page + server actions (demo login)
       (app)/               signed-in shell: sidebar + pages
         dashboard/  projects/  projects/[projectId]/  data/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
@@ -197,8 +210,9 @@ src/
   lib/import/              CSV reader/writer, dataset columns and validation + tests
   lib/demo/                deterministic sample data + the staged demo reset
   lib/projects/            owner-scoped project deletion + database tests
+  lib/access/              detail-page ownership check used by proxy.ts + database tests
   i18n/                    locale config, dictionaries (en, ko), server + client helpers
-  proxy.ts                 locale redirect for bare URLs + optimistic redirect to login
+  proxy.ts                 locale redirect for bare URLs, optimistic redirect to login, 404 for missing detail pages
 scripts/                   migrate + seed
 drizzle/                   generated SQL migrations
 ```

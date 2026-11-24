@@ -13,6 +13,12 @@ export const en = {
   lang: {
     label: "Language",
   },
+  notFound: {
+    title: "Page not found",
+    body: "This page doesn't exist, or it belongs to another account. It may also have been deleted.",
+    projects: "Go to projects",
+    home: "Home",
+  },
   common: {
     sections: "Sections",
     breadcrumb: "Breadcrumb",

@@ -11,6 +11,12 @@ export const ko: Dictionary = {
   lang: {
     label: "언어",
   },
+  notFound: {
+    title: "페이지를 찾을 수 없습니다",
+    body: "없는 페이지이거나 다른 계정의 페이지입니다. 이미 삭제되었을 수도 있습니다.",
+    projects: "프로젝트로 이동",
+    home: "홈",
+  },
   common: {
     sections: "섹션",
     breadcrumb: "현재 위치",
