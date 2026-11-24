@@ -418,7 +418,7 @@ export const en = {
     noSites: "No sites yet. Create a project, then add a site to start importing data.",
     newProject: "New project",
     newSite: "New site",
-    demoNote: "The demo workspace is shared, so other visitors can see and change what you import. It goes back to the sample data every day at about 18:00 UTC.",
+    demoNote: "The demo workspace is shared, so other visitors can see and change what you import. It goes back to the sample data every day at about 03:00 Korea time (18:00 UTC).",
     datasets: {
       skus: { title: "SKU master", body: "Dimensions, weight and case pack per SKU. Order lines refer to these codes." },
       orderLines: { title: "Order lines", body: "One row per shipped order line. Feeds movement analysis and slotting." },

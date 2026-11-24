@@ -121,7 +121,7 @@ request after a pause takes a second or two).
    Don't set `BETTER_AUTH_URL`; the app picks the production domain or the
    preview URL from Vercel's own variables.
 5. **Add the cron secret.** Create `CRON_SECRET` (another random string, e.g.
-   `openssl rand -hex 32`) for Production. Vercel Cron sends it to the daily
+   `openssl rand -hex 32`) for Production. Vercel Schedules sends it to the daily
    demo reset; without it the endpoint stays switched off.
 6. **Deploy.** Push to `main` (or Redeploy). The `vercel-build` script applies
    migrations, seeds the demo data **only if the database is empty**, then
@@ -137,7 +137,9 @@ Vercel.
 
 Visitors share the demo account and can import, clear or delete data, so it is put back every day.
 
-- `vercel.json` schedules a Vercel Cron job for `GET /api/cron/reset-demo` at 18:00 UTC (03:00 KST). Hobby crons run once a day and can fire any time within that hour.
+- `vercel.json` defines a Vercel Schedule (`reset-demo`) that calls `GET /api/cron/reset-demo` every day at 03:00 in the `Asia/Seoul` timezone (18:00 UTC). On Hobby it starts within a 15-minute window.
+- Pause it or run it on demand from the project's Schedules page (or `vercel schedules invoke reset-demo`) without redeploying; each run shows up in its execution history.
+- Vercel creates Preview-branch copies of the schedule as inactive. Leave them that way: Preview deployments share the production database.
 - The endpoint only runs with `Authorization: Bearer $CRON_SECRET`, which Vercel adds by itself.
 - It rebuilds the sample data in two steps so the workspace is never half-empty:
   1. **Staging.** A fresh copy (about 80k rows) is written under owner-less projects with temporary codes, in small requests. Nothing shows them, because every page filters by owner.
@@ -164,7 +166,7 @@ src/
       (app)/               signed-in shell: sidebar + pages
         dashboard/  projects/  projects/[projectId]/  data/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
     api/auth/[...all]/     Better Auth handler
-    api/cron/reset-demo/   daily demo reset (Vercel Cron)
+    api/cron/reset-demo/   daily demo reset (Vercel Schedules)
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
   components/studio/       3D editor: scene, instanced racks, store, toolbar, inspector
@@ -201,7 +203,7 @@ drizzle/                   generated SQL migrations
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
 - [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
 - [x] Data management: projects/sites, CSV import (validated, atomic), export and templates
-- [x] Daily demo reset (Vercel Cron, staged + atomic switch-over)
+- [x] Daily demo reset (Vercel Schedules, staged + atomic switch-over)
 - [x] Production deployment on Vercel + Neon (free tier)
 - [x] Landing polish
 - [x] English and Korean UI with locale-prefixed routes

@@ -17,7 +17,7 @@ function authorized(header: string | null, secret: string) {
 }
 
 /**
- * Daily demo reset, called by Vercel Cron (see vercel.json). Vercel sends
+ * Daily demo reset, called by a Vercel Schedule (see vercel.json). Vercel sends
  * `Authorization: Bearer $CRON_SECRET`; anything else is refused, and the
  * endpoint stays off until CRON_SECRET is set.
  */
