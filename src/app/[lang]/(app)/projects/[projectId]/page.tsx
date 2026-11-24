@@ -1,4 +1,4 @@
-import { ArrowLeft, Boxes, ChartColumnBig, DoorOpen, MoveVertical, Ruler } from "lucide-react";
+import { ArrowLeft, Boxes, ChartColumnBig, Database, DoorOpen, MoveVertical, Ruler } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -72,6 +72,16 @@ async function ProjectDetail({ params }: Pick<PageProps<"/[lang]/projects/[proje
 
         <section className="space-y-3">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">{t.sitesHeading}</h2>
+          {p.sites.length === 0 && (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+              {t.noSites}
+              <Button variant="outline" size="sm" asChild>
+                <Link href={localePath(locale, "/data")}>
+                  <Database /> {t.addSite}
+                </Link>
+              </Button>
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {p.sites.map((site) => (
               <Card key={site.id}>

@@ -95,6 +95,8 @@ export const ko: Dictionary = {
     skus: "SKU",
     analyse: "출고 분석",
     openLayout: "레이아웃 열기",
+    noSites: "아직 사이트가 없습니다.",
+    addSite: "데이터 화면에서 사이트 추가",
     danger: {
       title: "프로젝트 삭제",
       body: "‘{project}’ 프로젝트와 그 아래 사이트 {n}곳, 사이트에 저장된 데이터를 모두 삭제합니다.",

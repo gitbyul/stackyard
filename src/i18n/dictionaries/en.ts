@@ -97,6 +97,8 @@ export const en = {
     skus: "SKUs",
     analyse: "Analyse movement",
     openLayout: "Open layout",
+    noSites: "No sites yet.",
+    addSite: "Add a site on the Data page",
     danger: {
       title: "Delete project",
       body: "Deletes {project} with its {n} sites and everything stored under them.",
