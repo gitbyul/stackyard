@@ -8,10 +8,26 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
+const description =
+  "Warehouse design studio: ABC movement analysis, 3D rack layouts, slotting, labour benchmarks and process maps on one set of project data.";
+
+/** Absolute base for share links: the production domain on Vercel, localhost otherwise. */
+function siteUrl() {
+  const host = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  return new URL(host ? `https://${host}` : "http://localhost:3000");
+}
+
 export const metadata: Metadata = {
-  title: { default: "Stackyard", template: "%s · Stackyard" },
-  description:
-    "Warehouse design studio: analyse order data, size storage, and lay out distribution centers in 3D.",
+  metadataBase: siteUrl(),
+  title: { default: "Stackyard: warehouse design studio", template: "%s · Stackyard" },
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "Stackyard",
+    title: "Stackyard: warehouse design studio",
+    description,
+  },
+  twitter: { card: "summary_large_image", title: "Stackyard: warehouse design studio", description },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
