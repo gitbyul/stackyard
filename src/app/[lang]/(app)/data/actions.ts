@@ -21,6 +21,7 @@ import {
   type Issue,
 } from "@/lib/import/datasets";
 import { INDUSTRIES } from "@/lib/productivity/benchmarks";
+import { deleteOwnedProject } from "@/lib/projects/delete";
 
 /** Rows per INSERT statement; well under Postgres' 65,535 parameter limit. */
 const CHUNK = 1000;
@@ -246,18 +247,11 @@ export async function createSite(input: z.input<typeof siteInput>): Promise<Crea
   return { ok: true, id };
 }
 
-/**
- * Deletes a project with every site under it and, through the FK cascades,
- * their SKUs, orders, layouts, logs and maps. One statement, so it is atomic.
- */
+/** Deletes one of the user's projects with every site and dataset under it. */
 export async function deleteProject(projectId: string): Promise<{ ok: true } | { ok: false; error: "notFound" }> {
   const me = await requireUser();
   if (typeof projectId !== "string" || projectId.length === 0) return { ok: false, error: "notFound" };
-  const removed = await db
-    .delete(project)
-    .where(and(eq(project.id, projectId), eq(project.ownerId, me.id)))
-    .returning({ id: project.id });
-  return removed.length > 0 ? { ok: true } : { ok: false, error: "notFound" };
+  return (await deleteOwnedProject(db, projectId, me.id)) ? { ok: true } : { ok: false, error: "notFound" };
 }
 
 /** Deletes a site and everything under it (SKUs, orders, layouts, logs, maps). */

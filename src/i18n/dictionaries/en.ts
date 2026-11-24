@@ -569,7 +569,7 @@ export const en = {
       modules: "connected modules",
       lines: "sample order lines",
       positions: "pallet positions in 3D",
-      tests: "unit tests in CI",
+      tests: "tests in CI",
     },
     workflowTitle: "How a project flows",
     workflowIntro:
@@ -640,7 +640,7 @@ export const en = {
       },
       tests: {
         title: "Tested domain logic",
-        body: "ABC, layout generation, slotting, productivity and flow analysis are pure functions covered by unit tests, run in CI on every push.",
+        body: "ABC, layout generation, slotting, productivity and flow analysis are pure functions with unit tests. Database tests run the real migrations on an in-memory Postgres to check the demo reset and cascading deletes. CI runs them on every push.",
       },
       deploy: {
         title: "Free-tier production",

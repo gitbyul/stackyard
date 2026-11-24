@@ -567,7 +567,7 @@ export const ko: Dictionary = {
       modules: "연결된 모듈",
       lines: "샘플 주문 라인",
       positions: "3D 팔레트 위치",
-      tests: "CI 단위 테스트",
+      tests: "CI 테스트",
     },
     workflowTitle: "프로젝트 진행 흐름",
     workflowIntro:
@@ -638,7 +638,7 @@ export const ko: Dictionary = {
       },
       tests: {
         title: "테스트된 도메인 로직",
-        body: "ABC, 레이아웃 생성, 슬로팅, 생산성, 공정 분석은 순수 함수로 만들어 단위 테스트로 검증하고, push할 때마다 CI에서 실행합니다.",
+        body: "ABC, 레이아웃 생성, 슬로팅, 생산성, 공정 분석은 순수 함수로 만들어 단위 테스트로 검증합니다. DB 테스트는 메모리 Postgres에 실제 마이그레이션을 적용해 데모 초기화와 연쇄 삭제를 확인합니다. 모두 push할 때마다 CI에서 실행합니다.",
       },
       deploy: {
         title: "무료 플랜 운영",

@@ -65,6 +65,8 @@ Rules:
 
 The parser and validation rules are in `src/lib/import/` (unit-tested) and the server actions are in `src/app/[lang]/(app)/data/actions.ts`.
 
+Deleting is scoped to the owner: a project is removed only if the signed-in user owns it, and the foreign-key cascades take its sites, SKUs, order lines, labour logs, layouts and process maps with it in one statement (`src/lib/projects/delete.ts`).
+
 > The public demo account is shared, so anything imported there is visible to other visitors. It is reset to the sample data every day (see *Daily demo reset*).
 
 ## Languages
@@ -78,6 +80,7 @@ The UI ships in **English** and **Korean**. Every page lives under a locale pref
 - **Numbers and dates** go through `formatFor(locale)` (`src/lib/format.ts`), e.g. `697,000` / `69.7만`.
 - **Server actions** return error codes rather than text, and the UI maps them to the current language.
 - Accessibility labels from libraries (sidebar toggle, toast region, React Flow controls) are translated too.
+- **Tab titles** read `<page> · Stackyard`. List pages use the translated page name; detail pages (a project, a layout in the studio, a process map) use the item's own name. Their `generateMetadata` reuses the page's request-cached loader, so the title costs no extra query.
 
 User data such as project and site names is not translated. The social preview image stays in English because the built-in OG font has no Hangul glyphs.
 
@@ -90,15 +93,22 @@ To add a language: append it to `LOCALES` in `src/i18n/config.ts`, add a diction
 | `pnpm dev` / `build` / `start` | Next.js |
 | `pnpm typecheck` | Generate route types, then `tsc --noEmit` |
 | `pnpm lint` | ESLint |
-| `pnpm test` | Unit tests (Vitest) |
+| `pnpm test` | Unit tests plus database tests on an in-memory PGlite (Vitest) |
 | `pnpm db:generate` | Create a SQL migration from `src/lib/db/schema.ts` |
 | `pnpm db:migrate` | Apply migrations (Neon or PGlite, picked from `DATABASE_URL`) |
 | `pnpm db:seed` | Reset sample data + demo user (deterministic) |
 
+## Tests
+
+`pnpm test` runs two kinds of tests:
+
+- **Unit tests** for the pure logic: ABC analysis, layout model and generator, slotting solver, productivity index, process-map analysis, CSV parsing and validation, sample data.
+- **Database tests** (`src/lib/projects/delete.test.ts`) that start an in-memory PGlite, apply the real migrations and check what unit tests can't: the daily demo reset (fills, replaces, leaves no staging rows, keeps other users' data) and project deletion (owner-only, cascades to everything under the project and nothing else). They clear `DATABASE_URL` first, so they never touch Neon.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`:
-unit tests, ESLint, typecheck and a production build (pnpm from
+unit and database tests, ESLint, typecheck and a production build (pnpm from
 `packageManager`), on Node 26 like local development and Vercel. Vercel deploys
 separately through its Git integration.
 
@@ -174,7 +184,7 @@ src/
   components/three/        shared 3D pieces: site floor, docks, camera fitting
   components/productivity/ filters, status badge, weekly trend chart
   components/process/      process map editor and step node
-  components/data/         data page: dataset cards, CSV import dialog, project/site forms
+  components/data/         data page: dataset cards, CSV import dialog, project/site forms, delete dialogs
   components/ui/           shadcn/ui primitives
   lib/auth/                Better Auth config, session helpers, demo account
   lib/db/                  Drizzle schema + driver selection (Neon / PGlite)
@@ -186,6 +196,7 @@ src/
   lib/data/                data access layer, always scoped to the signed-in user
   lib/import/              CSV reader/writer, dataset columns and validation + tests
   lib/demo/                deterministic sample data + the staged demo reset
+  lib/projects/            owner-scoped project deletion + database tests
   i18n/                    locale config, dictionaries (en, ko), server + client helpers
   proxy.ts                 locale redirect for bare URLs + optimistic redirect to login
 scripts/                   migrate + seed
@@ -202,7 +213,7 @@ drizzle/                   generated SQL migrations
 - [x] Slotting: cube-per-order / velocity solver in a Web Worker, compared with a by-code baseline, 3D slot plan and CSV export
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
 - [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
-- [x] Data management: projects/sites, CSV import (validated, atomic), export and templates
+- [x] Data management: create and delete projects/sites, CSV import (validated, atomic), export and templates
 - [x] Daily demo reset (Vercel Schedules, staged + atomic switch-over)
 - [x] Production deployment on Vercel + Neon (free tier)
 - [x] Landing polish
