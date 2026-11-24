@@ -42,13 +42,39 @@ With `DATABASE_URL` empty, the app uses an embedded PGlite database in `.data/`,
 | `pnpm db:migrate` | Apply migrations (Neon or PGlite, picked from `DATABASE_URL`) |
 | `pnpm db:seed` | Reset sample data + demo user (deterministic) |
 
-## Deploying to Vercel (free)
+## Continuous integration
 
-1. Import the repo in Vercel.
-2. Storage → Marketplace → **Neon** → connect. This sets `DATABASE_URL`.
-3. Add the `BETTER_AUTH_SECRET` environment variable.
-4. Run once against the Neon URL: `DATABASE_URL=... pnpm db:setup`.
-5. Deploy. Vercel detects the production URL automatically.
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`:
+unit tests, ESLint, typecheck and a production build (Node 24, pnpm from
+`packageManager`). Vercel deploys separately through its Git integration.
+
+## Deploying to Vercel (free tier)
+
+Everything below fits the free plans: Vercel Hobby (non-commercial, fine for a
+portfolio) and Neon Free (0.5 GB; the database sleeps when idle, so the first
+request after a pause takes a second or two).
+
+1. **Import the repository** in Vercel (New Project → pick the GitHub repo).
+   Framework preset: Next.js. Leave the build command as the default.
+2. **Use pnpm 12.** Under Settings → Environment Variables add
+   `ENABLE_EXPERIMENTAL_COREPACK=1` so Vercel installs the pnpm version pinned in
+   `packageManager`. Under Settings → General set Node.js to **24.x**.
+3. **Add a database.** Storage → Marketplace → **Neon** → create and connect it
+   to the project. This sets `DATABASE_URL` for all environments.
+4. **Add the auth secret.** Create `BETTER_AUTH_SECRET` (any random string of 32+
+   characters, e.g. `openssl rand -base64 32`) for Production and Preview.
+   Don't set `BETTER_AUTH_URL`; the app picks the production domain or the
+   preview URL from Vercel's own variables.
+5. **Create the tables and demo data** once, from your machine, against Neon:
+
+   ```bash
+   DATABASE_URL="postgres://…neon.tech/neondb?sslmode=require" BETTER_AUTH_SECRET="…" pnpm db:setup
+   ```
+
+   Re-running `pnpm db:seed` resets the demo data. Apply new migrations later
+   with `pnpm db:migrate` the same way.
+6. **Deploy.** Push to `main` for production; every pull request gets its own
+   preview URL.
 
 ## Project layout
 
@@ -91,4 +117,4 @@ drizzle/                   generated SQL migrations
 - [x] Slotting: cube-per-order / velocity solver in a Web Worker, compared with a by-code baseline, 3D slot plan and CSV export
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
 - [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
-- [ ] i18n (ko/en), landing polish, deployment
+- [ ] Landing polish and production deployment
