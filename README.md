@@ -65,7 +65,7 @@ Rules:
 
 The parser and validation rules are in `src/lib/import/` (unit-tested) and the server actions are in `src/app/[lang]/(app)/data/actions.ts`.
 
-> The public demo account is shared, so anything imported there is visible to other visitors.
+> The public demo account is shared, so anything imported there is visible to other visitors. It is reset to the sample data every day (see *Daily demo reset*).
 
 ## Languages
 
@@ -120,7 +120,10 @@ request after a pause takes a second or two).
    characters, e.g. `openssl rand -base64 32`) for Production and Preview.
    Don't set `BETTER_AUTH_URL`; the app picks the production domain or the
    preview URL from Vercel's own variables.
-5. **Deploy.** Push to `main` (or Redeploy). The `vercel-build` script applies
+5. **Add the cron secret.** Create `CRON_SECRET` (another random string, e.g.
+   `openssl rand -hex 32`) for Production. Vercel Cron sends it to the daily
+   demo reset; without it the endpoint stays switched off.
+6. **Deploy.** Push to `main` (or Redeploy). The `vercel-build` script applies
    migrations, seeds the demo data **only if the database is empty**, then
    builds, so nobody has to copy the connection string. Every pull request gets
    its own preview URL.
@@ -130,8 +133,25 @@ default Standard Protection, other deployment URLs such as
 `<project>-<team>.vercel.app` or per-commit URLs ask visitors to sign in to
 Vercel.
 
-To reset the demo data later, run `pnpm db:seed` locally with the Neon
-`DATABASE_URL` and `BETTER_AUTH_SECRET` in your environment.
+### Daily demo reset
+
+Visitors share the demo account and can import, clear or delete data, so it is put back every day.
+
+- `vercel.json` schedules a Vercel Cron job for `GET /api/cron/reset-demo` at 18:00 UTC (03:00 KST). Hobby crons run once a day and can fire any time within that hour.
+- The endpoint only runs with `Authorization: Bearer $CRON_SECRET`, which Vercel adds by itself.
+- It rebuilds the sample data in two steps so the workspace is never half-empty:
+  1. **Staging.** A fresh copy (about 80k rows) is written under owner-less projects with temporary codes, in small requests. Nothing shows them, because every page filters by owner.
+  2. **Switch-over.** One atomic step deletes the demo account's projects (cascading to their sites, SKUs, orders, layouts, logs and maps) and hands the staged projects over.
+- A run that fails while staging is cleaned up by the next one.
+- The demo user and its sessions are kept. Other accounts are never touched.
+
+To run it by hand on production:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://<your-domain>/api/cron/reset-demo
+```
+
+To rebuild everything from scratch, demo user included, run `pnpm db:seed` locally with the Neon `DATABASE_URL` and `BETTER_AUTH_SECRET` in your environment.
 
 ## Project layout
 
@@ -144,6 +164,7 @@ src/
       (app)/               signed-in shell: sidebar + pages
         dashboard/  projects/  projects/[projectId]/  data/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
     api/auth/[...all]/     Better Auth handler
+    api/cron/reset-demo/   daily demo reset (Vercel Cron)
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
   components/studio/       3D editor: scene, instanced racks, store, toolbar, inspector
@@ -162,6 +183,7 @@ src/
   lib/process-map/         map model, flow analysis, auto-layout, seed template + tests
   lib/data/                data access layer, always scoped to the signed-in user
   lib/import/              CSV reader/writer, dataset columns and validation + tests
+  lib/demo/                deterministic sample data + the staged demo reset
   i18n/                    locale config, dictionaries (en, ko), server + client helpers
   proxy.ts                 locale redirect for bare URLs + optimistic redirect to login
 scripts/                   migrate + seed
@@ -179,6 +201,7 @@ drizzle/                   generated SQL migrations
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
 - [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
 - [x] Data management: projects/sites, CSV import (validated, atomic), export and templates
+- [x] Daily demo reset (Vercel Cron, staged + atomic switch-over)
 - [x] Production deployment on Vercel + Neon (free tier)
 - [x] Landing polish
 - [x] English and Korean UI with locale-prefixed routes
