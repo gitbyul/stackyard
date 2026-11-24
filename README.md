@@ -35,6 +35,38 @@ Open http://localhost:3000 and choose **Explore the demo workspace**.
 
 With `DATABASE_URL` empty, the app uses an embedded PGlite database in `.data/`, so you don't need Docker or a Postgres install.
 
+## Importing your own data
+
+**Data** in the sidebar (`/en/data`, `/ko/data`) is where each site's inputs are managed:
+
+- **Projects and sites**: create a project (name, client, industry), add sites to it, or delete a site together with everything stored under it.
+- **Datasets** per site, each with a CSV template, export and import:
+
+| Dataset | Columns | Feeds |
+| --- | --- | --- |
+| SKU master | `code, name, category, length_mm, width_mm, height_mm, weight_kg, units_per_case` | slotting, analysis |
+| Order lines | `order_no, shipped_on, sku_code, quantity` | movement analysis, slotting |
+| Labour logs | `work_date, shift, process, hours, volume` | productivity benchmarks |
+
+How an import works:
+
+1. The file is parsed and checked **in the browser** first, so problems are listed by row and column, with a preview, before anything is sent.
+2. The server parses and validates it **again**, and checks that every order line's `sku_code` exists in the site's SKU master.
+3. Nothing is written unless every row is valid. The write is **all-or-nothing**: one batch on Neon (HTTP batches run as a transaction), a transaction on PGlite.
+
+Rules:
+
+- Headers match in any order and case, and unknown columns are ignored.
+- Dates use `YYYY-MM-DD`.
+- A file can have up to 50,000 rows and 3.5 MB.
+- Exports use the same columns, so a file can be exported, edited and imported again.
+- **SKUs** can be *added or updated* by code, or *replaced*. Replace makes the file the SKU master, so SKUs that aren't in the file are deleted along with their order lines.
+- **Order lines and labour logs** can be *added* to what is stored or *replace* it.
+
+The parser and validation rules are in `src/lib/import/` (unit-tested) and the server actions are in `src/app/[lang]/(app)/data/actions.ts`.
+
+> The public demo account is shared, so anything imported there is visible to other visitors.
+
 ## Languages
 
 The UI ships in **English** and **Korean**. Every page lives under a locale prefix, e.g. `/en/dashboard` and `/ko/dashboard`, and each language is prerendered with its own `<html lang>`, canonical URL and `hreflang` alternates.
@@ -110,7 +142,7 @@ src/
       page.tsx             public landing page (static)
       login/               sign-in page + server actions (demo login)
       (app)/               signed-in shell: sidebar + pages
-        dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
+        dashboard/  projects/  projects/[projectId]/  data/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
     api/auth/[...all]/     Better Auth handler
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
@@ -119,6 +151,7 @@ src/
   components/three/        shared 3D pieces: site floor, docks, camera fitting
   components/productivity/ filters, status badge, weekly trend chart
   components/process/      process map editor and step node
+  components/data/         data page: dataset cards, CSV import dialog, project/site forms
   components/ui/           shadcn/ui primitives
   lib/auth/                Better Auth config, session helpers, demo account
   lib/db/                  Drizzle schema + driver selection (Neon / PGlite)
@@ -128,6 +161,7 @@ src/
   lib/productivity/        reference rates, performance index, weekly series + tests
   lib/process-map/         map model, flow analysis, auto-layout, seed template + tests
   lib/data/                data access layer, always scoped to the signed-in user
+  lib/import/              CSV reader/writer, dataset columns and validation + tests
   i18n/                    locale config, dictionaries (en, ko), server + client helpers
   proxy.ts                 locale redirect for bare URLs + optimistic redirect to login
 scripts/                   migrate + seed
@@ -144,6 +178,7 @@ drizzle/                   generated SQL migrations
 - [x] Slotting: cube-per-order / velocity solver in a Web Worker, compared with a by-code baseline, 3D slot plan and CSV export
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
 - [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
+- [x] Data management: projects/sites, CSV import (validated, atomic), export and templates
 - [x] Production deployment on Vercel + Neon (free tier)
 - [x] Landing polish
 - [x] English and Korean UI with locale-prefixed routes
