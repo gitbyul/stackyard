@@ -6,7 +6,8 @@ import { CartesianGrid, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } 
 import { Button } from "@/components/ui/button";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PROCESS_INFO, PROCESSES, type Process } from "@/lib/productivity/benchmarks";
+import { fill, useI18n } from "@/i18n/client";
+import { PROCESSES, type Process } from "@/lib/productivity/benchmarks";
 import type { WeekPoint } from "@/lib/productivity/metrics";
 
 /** Fixed categorical order; a process always keeps its colour. */
@@ -18,12 +19,8 @@ const COLOR: Record<Process, string> = {
   shipping: "var(--series-5)",
 };
 
-const config = Object.fromEntries(
-  PROCESSES.map((p) => [p, { label: PROCESS_INFO[p].label, color: COLOR[p] }]),
-) satisfies ChartConfig;
+const config = Object.fromEntries(PROCESSES.map((p) => [p, { label: p, color: COLOR[p] }])) satisfies ChartConfig;
 
-const weekLabel = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-const fmtWeek = (iso: string) => weekLabel.format(new Date(`${iso}T00:00:00Z`));
 /** Index from a ratio (1.0 = benchmark), as in the weekly table. */
 const fmtIndex = (v: number | null) => (v == null ? "–" : String(Math.round(v * 100)));
 /** Chart rows are already scaled to 100 = benchmark. */
@@ -32,17 +29,18 @@ const fmtScaled = (v: number | null) => (v == null ? "–" : String(Math.round(v
 type Row = { week: string } & Record<Process, number | null>;
 
 function TrendTooltip({ active, payload }: { active?: boolean; payload?: { payload: Row }[] }) {
+  const { t: dict, fmt } = useI18n();
   const row = payload?.[0]?.payload;
   if (!active || !row) return null;
   return (
     <div className="min-w-44 rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
-      <p className="mb-1.5 text-muted-foreground">Week of {fmtWeek(row.week)}</p>
+      <p className="mb-1.5 text-muted-foreground">{fill(dict.productivity.weekOf, { date: fmt.monthDay(row.week) })}</p>
       <ul className="space-y-1">
         {PROCESSES.map((p) => (
           <li key={p} className="flex items-center justify-between gap-4">
             <span className="flex items-center gap-2 text-muted-foreground">
               <span className="h-0.5 w-3 rounded-full" style={{ background: COLOR[p] }} />
-              {PROCESS_INFO[p].label}
+              {dict.processes[p].label}
             </span>
             <span className="font-semibold tabular-nums text-foreground">{fmtScaled(row[p])}</span>
           </li>
@@ -58,6 +56,8 @@ function TrendTooltip({ active, payload }: { active?: boolean; payload?: { paylo
  */
 export function TrendChart({ weeks }: { weeks: WeekPoint[] }) {
   const [showTable, setShowTable] = useState(false);
+  const { t: dict, fmt } = useI18n();
+  const fmtWeek = fmt.monthDay;
   const data = weeks.map((w) => {
     const row = { week: w.week } as Row;
     for (const p of PROCESSES) row[p] = w[p] == null ? null : w[p]! * 100;
@@ -81,7 +81,7 @@ export function TrendChart({ weeks }: { weeks: WeekPoint[] }) {
             y={100}
             stroke="var(--muted-foreground)"
             strokeDasharray="0"
-            label={{ value: "Benchmark", position: "insideTopRight", fill: "var(--muted-foreground)", fontSize: 11 }}
+            label={{ value: dict.productivity.benchmark, position: "insideTopRight", fill: "var(--muted-foreground)", fontSize: 11 }}
           />
           <Tooltip
             cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1 }}
@@ -107,11 +107,11 @@ export function TrendChart({ weeks }: { weeks: WeekPoint[] }) {
         {PROCESSES.map((p) => (
           <span key={p} className="flex items-center gap-1.5">
             <span className="h-0.5 w-3 rounded-full" style={{ background: COLOR[p] }} />
-            {PROCESS_INFO[p].label}
+            {dict.processes[p].label}
           </span>
         ))}
         <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={() => setShowTable((v) => !v)}>
-          {showTable ? "Hide table" : "Show as table"}
+          {showTable ? dict.productivity.hideTable : dict.productivity.showTable}
         </Button>
       </div>
       {showTable && (
@@ -119,10 +119,10 @@ export function TrendChart({ weeks }: { weeks: WeekPoint[] }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Week of</TableHead>
+                <TableHead>{dict.productivity.weekOfHeader}</TableHead>
                 {PROCESSES.map((p) => (
                   <TableHead key={p} className="text-right">
-                    {PROCESS_INFO[p].label}
+                    {dict.processes[p].label}
                   </TableHead>
                 ))}
               </TableRow>

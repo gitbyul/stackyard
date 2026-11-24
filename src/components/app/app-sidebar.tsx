@@ -18,34 +18,40 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { fill, useI18n } from "@/i18n/client";
 import { Logo } from "./logo";
 import { MODULE_NAV, WORKSPACE_NAV, type NavItem } from "./nav";
 
 function NavMenu({ items, pathname }: { items: NavItem[]; pathname: string | null }) {
+  const { t, href } = useI18n();
   return (
     <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.href}>
-          {item.soon ? (
-            <SidebarMenuButton disabled tooltip={`${item.title} (coming soon)`} aria-disabled>
-              <item.icon />
-              <span>{item.title}</span>
-            </SidebarMenuButton>
-          ) : (
-            <SidebarMenuButton
-              asChild
-              tooltip={item.title}
-              isActive={!!pathname && (pathname === item.href || pathname.startsWith(`${item.href}/`))}
-            >
-              <Link href={item.href}>
+      {items.map((item) => {
+        const title = t.nav[item.key];
+        const target = href(item.href);
+        return (
+          <SidebarMenuItem key={item.href}>
+            {item.soon ? (
+              <SidebarMenuButton disabled tooltip={fill(t.common.comingSoon, { title })} aria-disabled>
                 <item.icon />
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          )}
-          {item.soon && <SidebarMenuBadge className="text-[10px] uppercase">Soon</SidebarMenuBadge>}
-        </SidebarMenuItem>
-      ))}
+                <span>{title}</span>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton
+                asChild
+                tooltip={title}
+                isActive={!!pathname && (pathname === target || pathname.startsWith(`${target}/`))}
+              >
+                <Link href={target}>
+                  <item.icon />
+                  <span>{title}</span>
+                </Link>
+              </SidebarMenuButton>
+            )}
+            {item.soon && <SidebarMenuBadge className="text-[10px] uppercase">{t.common.soon}</SidebarMenuBadge>}
+          </SidebarMenuItem>
+        );
+      })}
     </SidebarMenu>
   );
 }
@@ -69,17 +75,18 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
 }
 
 export function AppSidebar({ footer }: { footer: React.ReactNode }) {
+  const { t } = useI18n();
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-14 justify-center px-4 group-data-[collapsible=icon]:px-2">
-        <Logo href="/dashboard" className="[&>span]:group-data-[collapsible=icon]:hidden" />
+        <Logo to="/dashboard" className="[&>span]:group-data-[collapsible=icon]:hidden" />
       </SidebarHeader>
       <SidebarContent>
-        <NavGroup label="Workspace" items={WORKSPACE_NAV} />
-        <NavGroup label="Modules" items={MODULE_NAV} />
+        <NavGroup label={t.nav.workspace} items={WORKSPACE_NAV} />
+        <NavGroup label={t.nav.modules} items={MODULE_NAV} />
       </SidebarContent>
       <SidebarFooter>{footer}</SidebarFooter>
-      <SidebarRail />
+      <SidebarRail label={t.a11y.toggleSidebar} />
     </Sidebar>
   );
 }

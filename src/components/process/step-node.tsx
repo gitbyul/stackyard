@@ -5,7 +5,8 @@ import { AlertTriangle } from "lucide-react";
 import { memo } from "react";
 
 import type { Step, StepKind } from "@/lib/process-map/model";
-import { PROCESS_INFO } from "@/lib/productivity/benchmarks";
+import { useI18n } from "@/i18n/client";
+import { formatMinutes } from "@/lib/process-map/format";
 import { cn } from "@/lib/utils";
 
 export type StepData = Omit<Step, "id" | "x" | "y"> & {
@@ -30,6 +31,8 @@ export function StepSymbol({ kind, className }: { kind: StepKind; className?: st
 }
 
 function StepNodeView({ data, selected }: NodeProps<StepNodeType>) {
+  const { t: dict } = useI18n();
+  const t = dict.process;
   return (
     <div
       className={cn(
@@ -47,12 +50,12 @@ function StepNodeView({ data, selected }: NodeProps<StepNodeType>) {
             {data.label}
           </p>
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-            {data.minutes} min
-            {data.process && ` · ${PROCESS_INFO[data.process].label}`}
+            {formatMinutes(t, data.minutes)}
+            {data.process && ` · ${dict.processes[data.process].label}`}
             {data.role && ` · ${data.role}`}
           </p>
         </div>
-        {data.flagged && <AlertTriangle className="size-3.5 shrink-0 text-destructive" aria-label="Has issues" />}
+        {data.flagged && <AlertTriangle className="size-3.5 shrink-0 text-destructive" aria-label={t.hasIssues} />}
       </div>
       <span
         className={cn(
@@ -60,7 +63,7 @@ function StepNodeView({ data, selected }: NodeProps<StepNodeType>) {
           data.valueAdded ? "bg-primary/10 text-primary dark:bg-signal/15 dark:text-signal" : "bg-muted text-muted-foreground",
         )}
       >
-        {data.valueAdded ? "Value-added" : "Non-value-added"}
+        {data.valueAdded ? t.valueAdded : t.nonValueAdded}
       </span>
       <Handle type="source" position={Position.Right} className="!size-2.5 !border-2 !border-card !bg-muted-foreground" />
     </div>

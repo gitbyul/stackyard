@@ -11,13 +11,14 @@ import { PROCESSES } from "@/lib/productivity/benchmarks";
 export const STEP_KINDS = ["operation", "inspection", "transport", "delay", "storage", "decision"] as const;
 export type StepKind = (typeof STEP_KINDS)[number];
 
-export const STEP_INFO: Record<StepKind, { label: string; hint: string; valueAddedByDefault: boolean }> = {
-  operation: { label: "Operation", hint: "Changes the product or order (pick, pack, label)", valueAddedByDefault: true },
-  inspection: { label: "Inspection", hint: "Checks quantity or quality", valueAddedByDefault: false },
-  transport: { label: "Transport", hint: "Moves goods between locations", valueAddedByDefault: false },
-  delay: { label: "Delay", hint: "Waiting: queues, staging, holds", valueAddedByDefault: false },
-  storage: { label: "Storage", hint: "Planned storage in a location", valueAddedByDefault: false },
-  decision: { label: "Decision", hint: "Branches the flow", valueAddedByDefault: false },
+/** Behaviour per step kind; the labels and hints live in the UI dictionaries. */
+export const STEP_INFO: Record<StepKind, { valueAddedByDefault: boolean }> = {
+  operation: { valueAddedByDefault: true },
+  inspection: { valueAddedByDefault: false },
+  transport: { valueAddedByDefault: false },
+  delay: { valueAddedByDefault: false },
+  storage: { valueAddedByDefault: false },
+  decision: { valueAddedByDefault: false },
 };
 
 export const stepSchema = z.object({

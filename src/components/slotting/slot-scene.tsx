@@ -11,6 +11,7 @@ import type { AbcClass } from "@/lib/analysis/abc";
 import type { Floor, RackRow } from "@/lib/layout/model";
 import type { Location } from "@/lib/slotting/locations";
 import type { Assignment } from "@/lib/slotting/solve";
+import { fill, useI18n } from "@/i18n/client";
 
 /** Same validated ordinal ramp as the analysis charts (light surface). */
 const CLASS_COLOR: Record<AbcClass, THREE.Color> = {
@@ -52,6 +53,8 @@ function SlotLoads({ slots, rows }: { slots: Slot[]; rows: RackRow[] }) {
   }, [slots, rows, hover]);
 
   const hovered = hover !== null ? slots[hover] : null;
+  const { t: dict, fmt } = useI18n();
+  const t = dict.slotting;
   const onMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     setHover(e.instanceId ?? null);
@@ -74,10 +77,10 @@ function SlotLoads({ slots, rows }: { slots: Slot[]; rows: RackRow[] }) {
           <div className="pointer-events-none w-max rounded-md border bg-popover px-2.5 py-1.5 text-xs shadow-md">
             <p className="font-mono font-semibold text-foreground">{hovered.a.sku.code}</p>
             <p className="text-muted-foreground">
-              {hovered.loc.code} · class {hovered.a.sku.cls}
+              {fill(t.hover.location, { loc: hovered.loc.code, cls: hovered.a.sku.cls })}
             </p>
             <p className="text-muted-foreground">
-              {hovered.a.sku.lines.toLocaleString("en-US")} lines · {Math.round(hovered.loc.cost)} m trip
+              {fill(t.hover.detail, { lines: fmt.number(hovered.a.sku.lines), trip: Math.round(hovered.loc.cost) })}
             </p>
           </div>
         </Html>

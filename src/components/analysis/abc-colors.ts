@@ -13,5 +13,3 @@ export const ABC_INK: Record<AbcClass, string> = {
   B: "var(--abc-b-ink)",
   C: "var(--abc-c-ink)",
 };
-
-export const METRIC_LABEL = { units: "Units shipped", lines: "Order lines" } as const;

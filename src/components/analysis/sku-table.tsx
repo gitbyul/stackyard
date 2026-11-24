@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { AbcClass, AbcItem, AbcMetric } from "@/lib/analysis/abc";
+import { fill, useI18n } from "@/i18n/client";
 import { AbcBadge } from "./abc-badge";
 
 const PAGE = 25;
-const nf = new Intl.NumberFormat("en-US");
 const pf = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 function toCsv(items: AbcItem[], metric: AbcMetric) {
@@ -36,6 +36,8 @@ export function SkuTable({
   metric: AbcMetric;
   fileName: string;
 }) {
+  const { t: dict, fmt } = useI18n();
+  const t = dict.analysis.table;
   const [cls, setCls] = useState<"all" | AbcClass>("all");
   const [limit, setLimit] = useState(PAGE);
 
@@ -63,33 +65,33 @@ export function SkuTable({
             setCls(v as typeof cls);
             setLimit(PAGE);
           }}
-          aria-label="Filter by class"
+          aria-label={t.filter}
         >
           <ToggleGroupItem value="all" className="px-3">
-            All
+            {t.all}
           </ToggleGroupItem>
           {(["A", "B", "C"] as const).map((c) => (
             <ToggleGroupItem key={c} value={c} className="px-3">
-              Class {c}
+              {fill(dict.common.classLabel, { cls: c })}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
         <Button variant="outline" size="sm" onClick={download}>
-          <Download /> Export CSV
+          <Download /> {dict.common.exportCsv}
         </Button>
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-14 pl-4 text-right">Rank</TableHead>
-            <TableHead className="w-12">Class</TableHead>
-            <TableHead>SKU</TableHead>
-            <TableHead className="hidden lg:table-cell">Category</TableHead>
-            <TableHead className="text-right">Units</TableHead>
-            <TableHead className="text-right">Lines</TableHead>
-            <TableHead className="hidden text-right sm:table-cell">Share</TableHead>
-            <TableHead className="pr-4 text-right">Cumulative</TableHead>
+            <TableHead className="w-14 pl-4 text-right">{t.rank}</TableHead>
+            <TableHead className="w-12">{t.cls}</TableHead>
+            <TableHead>{t.sku}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t.category}</TableHead>
+            <TableHead className="text-right">{t.units}</TableHead>
+            <TableHead className="text-right">{t.lines}</TableHead>
+            <TableHead className="hidden text-right sm:table-cell">{t.share}</TableHead>
+            <TableHead className="pr-4 text-right">{t.cumulative}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -105,10 +107,10 @@ export function SkuTable({
               </TableCell>
               <TableCell className="hidden text-muted-foreground lg:table-cell">{it.category}</TableCell>
               <TableCell className={`text-right tabular-nums ${metric === "units" ? "font-medium" : ""}`}>
-                {nf.format(it.units)}
+                {fmt.number(it.units)}
               </TableCell>
               <TableCell className={`text-right tabular-nums ${metric === "lines" ? "font-medium" : ""}`}>
-                {nf.format(it.lines)}
+                {fmt.number(it.lines)}
               </TableCell>
               <TableCell className="hidden text-right tabular-nums sm:table-cell">{pf(it.share)}</TableCell>
               <TableCell className="pr-4 text-right tabular-nums">{pf(it.cumShare)}</TableCell>
@@ -117,7 +119,7 @@ export function SkuTable({
           {visible.length === 0 && (
             <TableRow>
               <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
-                No SKUs in this class.
+                {t.empty}
               </TableCell>
             </TableRow>
           )}
@@ -127,7 +129,7 @@ export function SkuTable({
       {filtered.length > limit && (
         <div className="flex justify-center pb-4">
           <Button variant="ghost" size="sm" onClick={() => setLimit(filtered.length)}>
-            Show all {filtered.length} SKUs
+            {fill(dict.common.showAll, { n: filtered.length })}
           </Button>
         </div>
       )}

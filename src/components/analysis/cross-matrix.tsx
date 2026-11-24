@@ -1,12 +1,8 @@
+"use client";
+
+import { fill, useI18n } from "@/i18n/client";
 import { ABC_CLASSES } from "@/lib/analysis/abc";
 
-/** What each units × lines combination usually means for storage design. */
-const HINTS: Record<string, string> = {
-  AA: "Fast & heavy: forward pick face near the dock",
-  AC: "Bulk, few picks: pallet or full-case storage",
-  CA: "Picked often, small qty: compact shelving / carton flow",
-  CC: "Slow mover: high or deep storage",
-};
 
 /**
  * 3×3 cross-tab of units class (rows) vs order-lines class (columns). Cell
@@ -14,15 +10,19 @@ const HINTS: Record<string, string> = {
  * always printed, so the shade is never the only channel.
  */
 export function CrossMatrix({ matrix, total }: { matrix: number[][]; total: number }) {
+  const { t: dict } = useI18n();
+  const t = dict.analysis.matrix;
+  /** What each units × lines combination usually means for storage design. */
+  const HINTS: Record<string, string> = t.hints;
   const max = Math.max(1, ...matrix.flat());
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-80 border-separate border-spacing-0.5 text-sm">
-        <caption className="sr-only">SKU count by units class (rows) and order-lines class (columns)</caption>
+        <caption className="sr-only">{t.caption}</caption>
         <thead>
           <tr>
             <th scope="col" className="w-32 whitespace-nowrap text-left text-xs font-normal text-muted-foreground">
-              Units ↓ / Lines →
+              {t.corner}
             </th>
             {ABC_CLASSES.map((c) => (
               <th key={c} scope="col" className="pb-1 text-xs font-medium text-muted-foreground">
@@ -44,7 +44,7 @@ export function CrossMatrix({ matrix, total }: { matrix: number[][]; total: numb
                 return (
                   <td
                     key={c}
-                    title={`${n} SKUs: units ${r}, lines ${c}${hint ? `. ${hint}` : ""}`}
+                    title={`${fill(t.cell, { n, r, c })}${hint ? `. ${hint}` : ""}`}
                     className="h-14 rounded text-center tabular-nums"
                     // Capped at 55% so the regular text color stays legible in both themes.
                     style={{

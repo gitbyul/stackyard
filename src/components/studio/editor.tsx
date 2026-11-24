@@ -18,11 +18,12 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveLayout } from "@/app/(app)/studio/[layoutId]/actions";
+import { saveLayout } from "@/app/[lang]/(app)/studio/[layoutId]/actions";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { fill, useI18n } from "@/i18n/client";
 import type { RackRow } from "@/lib/layout/model";
 import { layoutStats } from "@/lib/layout/stats";
 import { Inspector } from "./inspector";
@@ -87,56 +88,58 @@ const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(n
 
 function Toolbar({ onSave, saving, dirty }: { onSave: () => void; saving: boolean; dirty: boolean }) {
   const s = useStudio((st) => st);
+  const { t: dict } = useI18n();
+  const t = dict.studio.toolbar;
   const mod = isMac() ? "⌘" : "Ctrl+";
   const hasSel = s.selectedId !== null;
 
   return (
     <div className="flex flex-wrap items-center gap-1 border-b px-3 py-1.5">
-      <ToolButton label="Undo" shortcut={`${mod}Z`} onClick={s.undo} disabled={s.past.length === 0}>
+      <ToolButton label={t.undo} shortcut={`${mod}Z`} onClick={s.undo} disabled={s.past.length === 0}>
         <Undo2 />
       </ToolButton>
-      <ToolButton label="Redo" shortcut={`${mod}⇧Z`} onClick={s.redo} disabled={s.future.length === 0}>
+      <ToolButton label={t.redo} shortcut={`${mod}⇧Z`} onClick={s.redo} disabled={s.future.length === 0}>
         <Redo2 />
       </ToolButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
-      <ToolButton label="Add rack row" shortcut="N" onClick={s.addRow}>
+      <ToolButton label={t.add} shortcut="N" onClick={s.addRow}>
         <Plus />
       </ToolButton>
-      <ToolButton label="Duplicate row" shortcut={`${mod}D`} onClick={s.duplicateSelected} disabled={!hasSel}>
+      <ToolButton label={t.duplicate} shortcut={`${mod}D`} onClick={s.duplicateSelected} disabled={!hasSel}>
         <Copy />
       </ToolButton>
-      <ToolButton label="Rotate row 90°" shortcut="R" onClick={s.rotateSelected} disabled={!hasSel}>
+      <ToolButton label={t.rotate} shortcut="R" onClick={s.rotateSelected} disabled={!hasSel}>
         <RotateCw />
       </ToolButton>
-      <ToolButton label="Delete row" shortcut="Del" onClick={s.removeSelected} disabled={!hasSel}>
+      <ToolButton label={t.remove} shortcut="Del" onClick={s.removeSelected} disabled={!hasSel}>
         <Trash2 />
       </ToolButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
       <ToolButton
-        label="Regenerate rack field"
+        label={t.regenerate}
         onClick={() => {
-          if (window.confirm("Replace every row with a generated rack field? You can undo this.")) s.regenerate();
+          if (window.confirm(t.regenerateConfirm)) s.regenerate();
         }}
       >
         <Wand2 />
       </ToolButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
-      <ToolButton label="Show pallet loads" shortcut="P" onClick={s.togglePallets} pressed={s.showPallets}>
+      <ToolButton label={t.pallets} shortcut="P" onClick={s.togglePallets} pressed={s.showPallets}>
         <Box />
       </ToolButton>
-      <ToolButton label="Top view" shortcut="T" onClick={() => s.requestCamera("top")}>
+      <ToolButton label={dict.common.topView} shortcut="T" onClick={() => s.requestCamera("top")}>
         <MapIcon />
       </ToolButton>
-      <ToolButton label="Perspective view" shortcut="V" onClick={() => s.requestCamera("perspective")}>
+      <ToolButton label={dict.common.perspectiveView} shortcut="V" onClick={() => s.requestCamera("perspective")}>
         <Rotate3d />
       </ToolButton>
 
       <div className="ml-auto flex items-center gap-3">
         <span className="hidden text-xs text-muted-foreground sm:inline" aria-live="polite">
-          {saving ? "Saving…" : dirty ? "Unsaved changes" : "All changes saved"}
+          {saving ? dict.common.saving : dirty ? dict.common.unsaved : dict.common.allSaved}
         </span>
         <Button size="sm" onClick={onSave} disabled={!dirty || saving}>
-          {saving ? <LoaderCircle className="animate-spin" /> : <Save />} Save
+          {saving ? <LoaderCircle className="animate-spin" /> : <Save />} {dict.common.save}
         </Button>
       </div>
     </div>
@@ -202,6 +205,7 @@ function EditorBody({ layout }: { layout: EditorLayout }) {
   const dirty = useStudio((s) => s.rows !== s.savedRows);
   const dragging = useStudio((s) => s.draggingId !== null);
   const [saving, startSaving] = useTransition();
+  const { t: dict } = useI18n();
 
   // Recompute checks after a drag ends, not on every pointer move.
   const [settledRows, setSettledRows] = useState(rows);
@@ -215,9 +219,9 @@ function EditorBody({ layout }: { layout: EditorLayout }) {
       const res = await saveLayout(layout.id, { version: 1, rows: snapshot });
       if (res.ok) {
         api.getState().markSaved(snapshot);
-        toast.success("Layout saved");
+        toast.success(dict.studio.saved);
       } else {
-        toast.error(res.error);
+        toast.error(dict.studio.errors[res.error]);
       }
     });
   };
@@ -241,7 +245,7 @@ function EditorBody({ layout }: { layout: EditorLayout }) {
         <div className="relative h-[60svh] min-h-0 min-w-0 lg:h-auto">
           <StudioScene dockDoors={layout.dockDoors} flagged={stats.flagged} />
           <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-[11px] text-muted-foreground backdrop-blur">
-            {floor.width} × {floor.depth} m · drag rows to move · right-drag to pan · scroll to zoom
+            {fill(dict.studio.hint, { w: floor.width, d: floor.depth })}
           </div>
         </div>
         <aside className="min-h-0 overflow-y-auto border-t lg:border-l lg:border-t-0">

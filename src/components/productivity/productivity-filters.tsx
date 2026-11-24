@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
+import { fill, useI18n } from "@/i18n/client";
 
 export type SiteOption = { id: string; name: string; projectName: string };
 
@@ -26,6 +27,8 @@ export function ProductivityShell({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const { t: dict } = useI18n();
+  const t = dict.productivity;
 
   const update = (key: "site" | "period", value: string) => {
     if (!value) return;
@@ -39,7 +42,7 @@ export function ProductivityShell({
       <div className="flex flex-wrap items-end gap-x-6 gap-y-4 px-6 pt-4">
         <div className="space-y-1.5">
           <Label htmlFor="prod-site" className="text-xs text-muted-foreground">
-            Site
+            {t.filters.site}
           </Label>
           <Select value={siteId} onValueChange={(v) => update("site", v)}>
             <SelectTrigger id="prod-site" className="w-64">
@@ -56,11 +59,11 @@ export function ProductivityShell({
           </Select>
         </div>
         <div className="space-y-1.5">
-          <span className="text-xs text-muted-foreground">Period</span>
+          <span className="text-xs text-muted-foreground">{t.filters.period}</span>
           <ToggleGroup type="single" variant="outline" value={period} onValueChange={(v) => update("period", v)}>
             {["30", "60", "90"].map((d) => (
               <ToggleGroupItem key={d} value={d} className="px-3">
-                {d} days
+                {fill(dict.common.days, { n: d })}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>

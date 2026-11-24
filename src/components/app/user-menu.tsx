@@ -1,6 +1,6 @@
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
-import { signOut } from "@/app/login/actions";
+import { signOut } from "@/app/[lang]/login/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fill } from "@/i18n/fill";
+import { getDictionary } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 
 function initials(name: string) {
@@ -26,6 +28,7 @@ function initials(name: string) {
 /** Reads the session, so render it inside <Suspense fallback={<UserMenuSkeleton />}>. */
 export async function UserMenu() {
   const user = await requireUser();
+  const t = (await getDictionary()).user;
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -46,13 +49,13 @@ export async function UserMenu() {
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-(--radix-dropdown-menu-trigger-width)">
             <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-              Signed in as {user.email}
+              {fill(t.signedInAs, { email: user.email })}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <form action={signOut}>
               <DropdownMenuItem asChild>
                 <button type="submit" className="w-full">
-                  <LogOut /> Sign out
+                  <LogOut /> {t.signOut}
                 </button>
               </DropdownMenuItem>
             </form>

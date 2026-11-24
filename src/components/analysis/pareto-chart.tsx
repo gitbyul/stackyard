@@ -4,7 +4,8 @@ import { Area, AreaChart, CartesianGrid, ReferenceLine, Tooltip, XAxis, YAxis } 
 
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { ABC_CLASSES, type AbcClass, type AbcItem, type AbcMetric } from "@/lib/analysis/abc";
-import { ABC_FILL, METRIC_LABEL } from "./abc-colors";
+import { fill, useI18n } from "@/i18n/client";
+import { ABC_FILL } from "./abc-colors";
 
 type Point = {
   skuPct: number;
@@ -16,9 +17,9 @@ type Point = {
 } & Partial<Record<AbcClass, number>>;
 
 const config = {
-  A: { label: "Class A", color: ABC_FILL.A },
-  B: { label: "Class B", color: ABC_FILL.B },
-  C: { label: "Class C", color: ABC_FILL.C },
+  A: { label: "A", color: ABC_FILL.A },
+  B: { label: "B", color: ABC_FILL.B },
+  C: { label: "C", color: ABC_FILL.C },
 } satisfies ChartConfig;
 
 /**
@@ -57,20 +58,22 @@ function ParetoTooltip({
   payload?: { payload: Point }[];
   metric: AbcMetric;
 }) {
+  const { t: dict } = useI18n();
+  const t = dict.analysis.chart;
   const p = payload?.[0]?.payload;
   if (!active || !p || !p.cls) return null;
   return (
     <div className="min-w-44 rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
       <p className="text-base font-semibold tabular-nums text-foreground">{p.cum.toFixed(1)}%</p>
-      <p className="text-muted-foreground">of {METRIC_LABEL[metric].toLowerCase()}</p>
+      <p className="text-muted-foreground">{fill(t.ofMetric, { metric: dict.analysis.metricLower[metric] })}</p>
       <div className="mt-2 flex items-center gap-2 border-t pt-2">
         <span className="h-0.5 w-3 rounded-full" style={{ background: ABC_FILL[p.cls] }} />
         <span className="font-medium text-foreground">
-          Top {p.rank} SKUs · {p.skuPct.toFixed(0)}%
+          {fill(t.topSkus, { n: p.rank, pct: p.skuPct.toFixed(0) })}
         </span>
       </div>
       <p className="mt-1 text-muted-foreground">
-        #{p.rank} {p.code}, class {p.cls}
+        {fill(t.point, { rank: p.rank, code: p.code ?? "", cls: p.cls })}
       </p>
     </div>
   );
@@ -85,6 +88,8 @@ export function ParetoChart({
   metric: AbcMetric;
   thresholds: { a: number; b: number };
 }) {
+  const { t: dict } = useI18n();
+  const t = dict.analysis.chart;
   const data = toPoints(items);
   return (
     <div className="space-y-3">
@@ -148,10 +153,10 @@ export function ParetoChart({
         {ABC_CLASSES.map((cls) => (
           <span key={cls} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: ABC_FILL[cls] }} />
-            Class {cls}
+            {fill(dict.common.classLabel, { cls })}
           </span>
         ))}
-        <span className="ml-auto pr-4">x: share of SKUs, ranked · y: cumulative share</span>
+        <span className="ml-auto pr-4">{t.axes}</span>
       </div>
     </div>
   );

@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
 /** Three stacked pallets in isometric-ish blocks; the top one is the signal color. */
@@ -13,9 +16,11 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ href = "/", className }: { href?: string; className?: string }) {
+/** Logo link. `to` is an app path without the locale; it gets the current one. */
+export function Logo({ to = "/", className }: { to?: string; className?: string }) {
+  const { href } = useI18n();
   return (
-    <Link href={href} className={cn("flex items-center gap-2 font-semibold tracking-tight", className)}>
+    <Link href={href(to)} className={cn("flex items-center gap-2 font-semibold tracking-tight", className)}>
       <LogoMark />
       <span>Stackyard</span>
     </Link>

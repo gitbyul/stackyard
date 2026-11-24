@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { CUT_PRESETS } from "@/lib/analysis/presets";
+import { fill, useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
 export type SiteOption = { id: string; name: string; projectName: string; client: string };
@@ -51,12 +52,17 @@ export function AnalysisShell({
     startTransition(() => router.replace(`${pathname}?${params}`, { scroll: false }));
   }
 
+  const { t: dict } = useI18n();
+  const t = dict.analysis;
+  const presetLabel = (p?: (typeof CUT_PRESETS)[number]) =>
+    p ? ("standard" in p ? `${p.label} (${t.filters.standard})` : p.label) : "";
+
   const byProject = Map.groupBy(sites, (s) => `${s.projectName} · ${s.client}`);
 
   return (
     <>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-4 px-6 pt-4">
-        <Field label="Site" htmlFor="filter-site">
+        <Field label={t.filters.site} htmlFor="filter-site">
           <Select value={values.site} onValueChange={(v) => update("site", v)}>
             <SelectTrigger id="filter-site" className="w-64">
               {/* Explicit label: the items live in a portal that isn't mounted until opened. */}
@@ -77,48 +83,48 @@ export function AnalysisShell({
           </Select>
         </Field>
 
-        <Field label="Period">
+        <Field label={t.filters.period}>
           <ToggleGroup
             type="single"
             variant="outline"
             value={values.period}
             onValueChange={(v) => update("period", v)}
-            aria-label="Period"
+            aria-label={t.filters.period}
           >
             {["30", "60", "90"].map((d) => (
               <ToggleGroupItem key={d} value={d} className="px-3">
-                {d} days
+                {fill(dict.common.days, { n: d })}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
         </Field>
 
-        <Field label="Rank by">
+        <Field label={t.filters.rankBy}>
           <ToggleGroup
             type="single"
             variant="outline"
             value={values.metric}
             onValueChange={(v) => update("metric", v)}
-            aria-label="Rank by"
+            aria-label={t.filters.rankBy}
           >
             <ToggleGroupItem value="units" className="px-3">
-              Units
+              {t.filters.units}
             </ToggleGroupItem>
             <ToggleGroupItem value="lines" className="px-3">
-              Order lines
+              {t.filters.lines}
             </ToggleGroupItem>
           </ToggleGroup>
         </Field>
 
-        <Field label="A / B cut-off (%)" htmlFor="filter-cut">
+        <Field label={t.filters.cut} htmlFor="filter-cut">
           <Select value={values.cut} onValueChange={(v) => update("cut", v)}>
             <SelectTrigger id="filter-cut" className="w-44">
-              <SelectValue>{CUT_PRESETS.find((p) => p.value === values.cut)?.label}</SelectValue>
+              <SelectValue>{presetLabel(CUT_PRESETS.find((p) => p.value === values.cut))}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {CUT_PRESETS.map((p) => (
                 <SelectItem key={p.value} value={p.value}>
-                  {p.label}
+                  {presetLabel(p)}
                 </SelectItem>
               ))}
             </SelectContent>

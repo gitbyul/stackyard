@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { fill, useI18n } from "@/i18n/client";
 import { useStudio } from "./store";
 
 export function RowList({ flagged }: { flagged: Set<string> }) {
@@ -12,6 +13,7 @@ export function RowList({ flagged }: { flagged: Set<string> }) {
   const select = useStudio((s) => s.select);
   const hover = useStudio((s) => s.hover);
   const listRef = useRef<HTMLUListElement>(null);
+  const { t } = useI18n();
 
   // Keep the selected row visible when it's picked in the 3D view.
   useEffect(() => {
@@ -24,7 +26,7 @@ export function RowList({ flagged }: { flagged: Set<string> }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <h2 className="px-4 pb-2 pt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Rows ({rows.length})
+        {fill(t.studio.rowsCount, { n: rows.length })}
       </h2>
       <ul ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
         {rows.map((r) => (
@@ -41,7 +43,7 @@ export function RowList({ flagged }: { flagged: Set<string> }) {
               )}
             >
               <span className="flex items-center gap-1.5 font-mono text-xs">
-                {flagged.has(r.id) && <AlertTriangle className="size-3.5 text-destructive" aria-label="Has issues" />}
+                {flagged.has(r.id) && <AlertTriangle className="size-3.5 text-destructive" aria-label={t.studio.hasIssues} />}
                 {r.name}
               </span>
               <span className="text-xs tabular-nums text-muted-foreground">
