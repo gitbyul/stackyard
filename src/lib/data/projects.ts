@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, count, countDistinct, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -62,7 +63,8 @@ export async function getWorkspaceTotals() {
   };
 }
 
-export async function getProject(projectId: string) {
+/** Cached per request, so the page and its metadata share one query. */
+export const getProject = cache(async (projectId: string) => {
   const user = await requireUser();
   const [row] = await db
     .select()
@@ -87,6 +89,6 @@ export async function getProject(projectId: string) {
     .orderBy(site.name);
 
   return { ...row, sites };
-}
+});
 
 export type ProjectStatus = (typeof project.status.enumValues)[number];

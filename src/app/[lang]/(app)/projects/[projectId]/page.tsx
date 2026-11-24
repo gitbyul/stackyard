@@ -1,4 +1,5 @@
 import { ArrowLeft, Boxes, ChartColumnBig, DoorOpen, MoveVertical, Ruler } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -14,6 +15,12 @@ import { localePath } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import { getDictionary, getLocale } from "@/i18n/server";
 import { formatFor } from "@/lib/format";
+
+export async function generateMetadata({ params }: PageProps<"/[lang]/projects/[projectId]">): Promise<Metadata> {
+  const { projectId } = await params;
+  const p = await getProject(projectId);
+  return { title: p.name };
+}
 
 export default function ProjectPage({ params }: PageProps<"/[lang]/projects/[projectId]">) {
   return (
