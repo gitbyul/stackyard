@@ -18,6 +18,7 @@
 | Diagrams | React Flow (@xyflow/react) |
 | Data | PostgreSQL via Drizzle ORM: **Neon** in production, embedded **PGlite** locally |
 | Auth | Better Auth (email + password, cookie-cached sessions), Next.js `proxy.ts` gate |
+| i18n | English + Korean, locale-prefixed routes (`/en`, `/ko`), typed dictionaries, `Intl` formatting |
 | Hosting | Vercel (Hobby/free tier) |
 
 ## Getting started
@@ -33,6 +34,22 @@ pnpm dev
 Open http://localhost:3000 and choose **Explore the demo workspace**.
 
 With `DATABASE_URL` empty, the app uses an embedded PGlite database in `.data/`, so you don't need Docker or a Postgres install.
+
+## Languages
+
+The UI ships in **English** and **Korean**. Every page lives under a locale prefix, e.g. `/en/dashboard` and `/ko/dashboard`, and each language is prerendered with its own `<html lang>`, canonical URL and `hreflang` alternates.
+
+- **Bare URLs** (`/`, `/dashboard?site=…`) are redirected by `proxy.ts`: first to the language saved in the `NEXT_LOCALE` cookie, then the best match from the browser's `Accept-Language`, then English. The query string is kept.
+- **Language switcher** in the page header, landing page, login page and editors. It swaps the `/{lang}` segment of the current URL and remembers the choice in the cookie.
+- **Dictionaries** live in `src/i18n/dictionaries/`. `en.ts` defines the shape and `ko.ts` must satisfy it, so a missing or extra key fails `pnpm typecheck`. Placeholders use `{name}` and are filled with `fill()`.
+- **Server components** call `getLocale()` / `getDictionary()` (`src/i18n/server.ts`, built on `next/root-params`). **Client components** use `useI18n()`, which returns `{ locale, t, fmt, href }`.
+- **Numbers and dates** go through `formatFor(locale)` (`src/lib/format.ts`), e.g. `697,000` / `69.7만`.
+- **Server actions** return error codes rather than text, and the UI maps them to the current language.
+- Accessibility labels from libraries (sidebar toggle, toast region, React Flow controls) are translated too.
+
+User data such as project and site names is not translated. The social preview image stays in English because the built-in OG font has no Hangul glyphs.
+
+To add a language: append it to `LOCALES` in `src/i18n/config.ts`, add a dictionary that satisfies `Dictionary`, and register it in `src/i18n/dictionaries/index.ts`.
 
 ## Scripts
 
@@ -89,10 +106,11 @@ To reset the demo data later, run `pnpm db:seed` locally with the Neon
 ```
 src/
   app/
-    page.tsx               public landing page (static)
-    login/                 sign-in page + server actions (demo login)
-    (app)/                 signed-in shell: sidebar + pages
-      dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
+    [lang]/                every page, prefixed with /en or /ko
+      page.tsx             public landing page (static)
+      login/               sign-in page + server actions (demo login)
+      (app)/               signed-in shell: sidebar + pages
+        dashboard/  projects/  projects/[projectId]/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
     api/auth/[...all]/     Better Auth handler
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
@@ -110,7 +128,8 @@ src/
   lib/productivity/        reference rates, performance index, weekly series + tests
   lib/process-map/         map model, flow analysis, auto-layout, seed template + tests
   lib/data/                data access layer, always scoped to the signed-in user
-  proxy.ts                 optimistic redirect to /login
+  i18n/                    locale config, dictionaries (en, ko), server + client helpers
+  proxy.ts                 locale redirect for bare URLs + optimistic redirect to login
 scripts/                   migrate + seed
 drizzle/                   generated SQL migrations
 ```
@@ -126,4 +145,5 @@ drizzle/                   generated SQL migrations
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
 - [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
 - [x] Production deployment on Vercel + Neon (free tier)
-- [ ] Landing polish
+- [x] Landing polish
+- [x] English and Korean UI with locale-prefixed routes
