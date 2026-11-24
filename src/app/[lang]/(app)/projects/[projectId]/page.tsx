@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { PageHeader } from "@/components/app/page-header";
+import { DeleteProject } from "@/components/data/delete-project";
 import { ProjectStatusBadge } from "@/components/app/project-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,6 +98,8 @@ async function ProjectDetail({ params }: Pick<PageProps<"/[lang]/projects/[proje
             ))}
           </div>
         </section>
+
+        <DeleteProject projectId={p.id} projectName={p.name} projectCode={p.code} siteCount={p.sites.length} />
       </div>
     </>
   );

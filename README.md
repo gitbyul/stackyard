@@ -39,7 +39,7 @@ With `DATABASE_URL` empty, the app uses an embedded PGlite database in `.data/`,
 
 **Data** in the sidebar (`/en/data`, `/ko/data`) is where each site's inputs are managed:
 
-- **Projects and sites**: create a project (name, client, industry), add sites to it, or delete a site together with everything stored under it.
+- **Projects and sites**: create a project (name, client, industry), add sites to it, or delete a site or a whole project together with everything stored under it. Deleting a project asks you to type its code first.
 - **Datasets** per site, each with a CSV template, export and import:
 
 | Dataset | Columns | Feeds |

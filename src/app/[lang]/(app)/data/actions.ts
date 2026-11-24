@@ -246,6 +246,20 @@ export async function createSite(input: z.input<typeof siteInput>): Promise<Crea
   return { ok: true, id };
 }
 
+/**
+ * Deletes a project with every site under it and, through the FK cascades,
+ * their SKUs, orders, layouts, logs and maps. One statement, so it is atomic.
+ */
+export async function deleteProject(projectId: string): Promise<{ ok: true } | { ok: false; error: "notFound" }> {
+  const me = await requireUser();
+  if (typeof projectId !== "string" || projectId.length === 0) return { ok: false, error: "notFound" };
+  const removed = await db
+    .delete(project)
+    .where(and(eq(project.id, projectId), eq(project.ownerId, me.id)))
+    .returning({ id: project.id });
+  return removed.length > 0 ? { ok: true } : { ok: false, error: "notFound" };
+}
+
 /** Deletes a site and everything under it (SKUs, orders, layouts, logs, maps). */
 export async function deleteSite(siteId: string): Promise<{ ok: true } | { ok: false; error: "notFound" }> {
   const me = await requireUser();
