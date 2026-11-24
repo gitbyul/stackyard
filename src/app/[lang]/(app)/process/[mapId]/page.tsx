@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -9,6 +10,11 @@ import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { localePath } from "@/i18n/config";
 import { getDictionary, getLocale } from "@/i18n/server";
 import { getProcessMap } from "@/lib/data/process-maps";
+
+export async function generateMetadata({ params }: PageProps<"/[lang]/process/[mapId]">): Promise<Metadata> {
+  const { mapId } = await params;
+  return { title: (await getProcessMap(mapId)).name };
+}
 
 export default function ProcessMapPage({ params }: PageProps<"/[lang]/process/[mapId]">) {
   return (

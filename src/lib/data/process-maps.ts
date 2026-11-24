@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -59,8 +60,11 @@ export async function listProcessMaps() {
   });
 }
 
-/** One map with its recent history (newest first). 404s if not the user's. */
-export async function getProcessMap(mapId: string) {
+/**
+ * One map with its recent history (newest first). 404s if not the user's.
+ * Cached per request, so the page and its metadata share one query.
+ */
+export const getProcessMap = cache(async (mapId: string) => {
   const me = await requireUser();
   const [map] = await db
     .select({
@@ -92,4 +96,4 @@ export async function getProcessMap(mapId: string) {
     .limit(HISTORY_LIMIT);
 
   return { ...map, versions };
-}
+});

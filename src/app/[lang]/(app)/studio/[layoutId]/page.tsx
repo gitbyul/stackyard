@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -9,6 +10,11 @@ import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { localePath } from "@/i18n/config";
 import { getDictionary, getLocale } from "@/i18n/server";
 import { getLayout } from "@/lib/data/layouts";
+
+export async function generateMetadata({ params }: PageProps<"/[lang]/studio/[layoutId]">): Promise<Metadata> {
+  const { layoutId } = await params;
+  return { title: (await getLayout(layoutId)).name };
+}
 
 export default function StudioLayoutPage({ params }: PageProps<"/[lang]/studio/[layoutId]">) {
   return (

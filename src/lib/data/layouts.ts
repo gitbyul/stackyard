@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -37,8 +38,11 @@ export async function listLayouts() {
   }));
 }
 
-/** One layout with what the editor needs from its site. 404s if not the user's. */
-export async function getLayout(layoutId: string) {
+/**
+ * One layout with what the editor needs from its site. 404s if not the
+ * user's. Cached per request, so the page and its metadata share one query.
+ */
+export const getLayout = cache(async (layoutId: string) => {
   const user = await requireUser();
   const [row] = await db
     .select({
@@ -61,7 +65,7 @@ export async function getLayout(layoutId: string) {
     .where(and(eq(layout.id, layoutId), eq(project.ownerId, user.id)));
   if (!row) notFound();
   return row;
-}
+});
 
 /**
  * First layout id per site, so other pages can link into the studio. Callers
