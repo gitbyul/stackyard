@@ -1,5 +1,9 @@
 # Stackyard
 
+[![CI](https://github.com/gitbyul/stackyard/actions/workflows/ci.yml/badge.svg)](https://github.com/gitbyul/stackyard/actions/workflows/ci.yml)
+
+**Live demo: [stackyard-byul3.vercel.app](https://stackyard-byul3.vercel.app)**. Choose *Explore the demo workspace* to sign in.
+
 **Warehouse design studio**: turn raw order lines into storage decisions. Analyse SKU movement, size the racking, and lay out a distribution center in an interactive 3D studio.
 
 > Portfolio project. Every company, site and dataset in it is fictional.
@@ -116,4 +120,5 @@ drizzle/                   generated SQL migrations
 - [x] Slotting: cube-per-order / velocity solver in a Web Worker, compared with a by-code baseline, 3D slot plan and CSV export
 - [x] Productivity: per-process labour rates vs. industry reference rates, weekly index trend, site comparison
 - [x] Process maps: React Flow editor with ASME step types, critical path, value-added ratio, auto-arrange and immutable version history
-- [ ] Landing polish and production deployment
+- [x] Production deployment on Vercel + Neon (free tier)
+- [ ] Landing polish
