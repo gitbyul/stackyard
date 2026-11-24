@@ -67,7 +67,7 @@ export async function importDataset(
     const keep = new Set(codes);
     const removed = replace ? existing.filter((r) => !keep.has(r.code)).length : 0;
 
-    await runAtomic((q) => [
+    await runAtomic(db, (q) => [
       // Replace = the file becomes the SKU master. Dropping a SKU also drops
       // its order lines (FK cascade); SKUs still in the file keep theirs.
       ...(replace && removed > 0 ? [q.delete(sku).where(and(eq(sku.siteId, siteId), notInArray(sku.code, codes)))] : []),
@@ -109,7 +109,7 @@ export async function importDataset(
     if (issueCount > 0) return { ok: false, error: "invalid", issues, issueCount };
 
     const removed = replace ? await countRows("orderLines", siteId) : 0;
-    await runAtomic((q) => [
+    await runAtomic(db, (q) => [
       ...(replace ? [q.delete(orderLine).where(eq(orderLine.siteId, siteId))] : []),
       ...chunks(parsed.rows).map((part) =>
         q.insert(orderLine).values(
@@ -130,7 +130,7 @@ export async function importDataset(
   const parsed = parseDataset("laborLogs", csv);
   if (parsed.issueCount > 0) return { ok: false, error: "invalid", issues: parsed.issues, issueCount: parsed.issueCount };
   const removed = replace ? await countRows("laborLogs", siteId) : 0;
-  await runAtomic((q) => [
+  await runAtomic(db, (q) => [
     ...(replace ? [q.delete(laborLog).where(eq(laborLog.siteId, siteId))] : []),
     ...chunks(parsed.rows).map((part) => q.insert(laborLog).values(part.map((r) => ({ id: newId("lab"), siteId, ...r })))),
   ]);
