@@ -6,6 +6,12 @@
       "timezone": "Asia/Seoul",
       "path": "/api/cron/reset-demo",
       "requestMethod": "GET"
+    },
+    "purge-accounts": {
+      "schedule": "0 4 */3 * *",
+      "timezone": "Asia/Seoul",
+      "path": "/api/cron/purge-accounts",
+      "requestMethod": "GET"
     }
   }
 }
