@@ -30,7 +30,7 @@ import { formatFor } from "@/lib/format";
 const REPO_URL = "https://github.com/gitbyul/stackyard";
 
 /** Number of unit tests (`pnpm test`); update when the suite grows. */
-const TEST_COUNT = 90;
+const TEST_COUNT = 91;
 
 function GitHubMark({ className }: { className?: string }) {
   return (

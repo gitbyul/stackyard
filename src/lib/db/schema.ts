@@ -99,7 +99,10 @@ export const project = pgTable("project", {
   status: projectStatus("status").notNull().default("discovery"),
   summary: text("summary"),
   startedOn: date("started_on").notNull(),
-  ownerId: text("owner_id").references(() => user.id, { onDelete: "set null" }),
+  // Deleting an account deletes its projects and, through the cascades below,
+  // everything under them, so no orphaned data is left behind. Nullable only
+  // because the demo reset stages its fresh copy without an owner.
+  ownerId: text("owner_id").references(() => user.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

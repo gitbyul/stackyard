@@ -65,7 +65,7 @@ Rules:
 
 The parser and validation rules are in `src/lib/import/` (unit-tested) and the server actions are in `src/app/[lang]/(app)/data/actions.ts`.
 
-Deleting is scoped to the owner: a project is removed only if the signed-in user owns it, and the foreign-key cascades take its sites, SKUs, order lines, labour logs, layouts and process maps with it in one statement (`src/lib/projects/delete.ts`).
+Deleting is scoped to the owner: a project is removed only if the signed-in user owns it, and the foreign-key cascades take its sites, SKUs, order lines, labour logs, layouts and process maps with it in one statement (`src/lib/projects/delete.ts`). Deleting an account works the same way: `project.owner_id` is `ON DELETE CASCADE`, so the account's projects and everything under them go with it and no orphaned rows are left.
 
 > The public demo account is shared, so anything imported there is visible to other visitors. It is reset to the sample data every day (see *Daily demo reset*).
 
@@ -113,7 +113,7 @@ Unknown URLs and detail pages (a project, a layout in the studio, a process map)
 
 - **Unit tests** for the pure logic: ABC analysis, layout model and generator, slotting solver, productivity index, process-map analysis, CSV parsing and validation, sample data.
 - **Database tests** that start an in-memory PGlite, apply the real migrations and check what unit tests can't. They clear `DATABASE_URL` first, so they never touch Neon.
-  - `src/lib/projects/delete.test.ts`: the daily demo reset (fills, replaces, leaves no staging rows, keeps other users' data) and project deletion (owner-only, cascades to everything under the project and nothing else).
+  - `src/lib/projects/delete.test.ts`: the daily demo reset (fills, replaces, leaves no staging rows, keeps other users' data) and project deletion (owner-only, cascades to everything under the project and nothing else), and account deletion (takes the account's projects, their data and sessions, and nothing of other users).
   - `src/lib/access/detail.test.ts`: who may open a project, layout or process map page (owner yes; other users, expired sessions, unknown tokens and missing ids no).
 
 ## Continuous integration

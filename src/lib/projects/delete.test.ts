@@ -127,3 +127,31 @@ describe("deleteOwnedProject", () => {
     expect(await db.$count(s.project, eq(s.project.id, "prj_other"))).toBe(1);
   });
 });
+
+describe("deleting an account", () => {
+  it("removes its projects and everything under them, its sessions, and nothing of other users", async () => {
+    const now = new Date();
+    await db.insert(s.session).values({
+      id: "ses_owner",
+      userId: OWNER,
+      token: "tok_owner",
+      expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+      createdAt: now,
+      updatedAt: now,
+    });
+    const owned = await db.select({ id: s.project.id }).from(s.project).where(eq(s.project.ownerId, OWNER));
+    const ownedSites = (await Promise.all(owned.map((p) => sitesOf(p.id)))).flat();
+    expect(owned.length).toBeGreaterThan(0);
+    expect((await countFor(ownedSites)).orderLines).toBeGreaterThan(0);
+    const othersBefore = await db.$count(s.project, eq(s.project.ownerId, OTHER));
+
+    await db.delete(s.user).where(eq(s.user.id, OWNER));
+
+    expect(await db.$count(s.project, eq(s.project.ownerId, OWNER))).toBe(0);
+    expect(await db.$count(s.project, inArray(s.project.id, owned.map((p) => p.id)))).toBe(0);
+    expect(await countFor(ownedSites)).toEqual({ sites: 0, skus: 0, orderLines: 0, laborLogs: 0, layouts: 0, maps: 0 });
+    expect(await db.$count(s.session, eq(s.session.userId, OWNER))).toBe(0);
+    expect(await db.$count(s.project, eq(s.project.ownerId, OTHER))).toBe(othersBefore);
+    expect(await db.$count(s.user, eq(s.user.id, OTHER))).toBe(1);
+  });
+});
