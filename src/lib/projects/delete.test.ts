@@ -8,6 +8,8 @@ import type { Db } from "@/lib/db/client";
 import * as s from "@/lib/db/schema";
 import { buildSampleData } from "@/lib/demo/sample-data";
 import { replaceDemoData } from "@/lib/demo/reset";
+import { countUsage } from "@/lib/usage/count";
+import { LIMITS } from "@/lib/usage/limits";
 import { deleteOwnedProject } from "./delete";
 
 /*
@@ -70,6 +72,20 @@ describe("demo reset on a real schema", () => {
     expect(await db.$count(s.project, eq(s.project.ownerId, OWNER))).toBe(expected.projects.length);
     expect(await db.$count(s.project, like(s.project.code, "%~staging"))).toBe(0);
   }, 60_000);
+
+  it("counts the account's usage, and the demo sample fits the limits", async () => {
+    const expected = buildSampleData(OWNER);
+    const usage = await countUsage(db, OWNER);
+    expect(usage).toEqual({
+      projects: expected.projects.length,
+      sites: expected.sites.length,
+      rows: expected.skus.length + expected.orderLines.length + expected.laborLogs.length,
+    });
+    expect(usage.projects).toBeLessThan(LIMITS.projects);
+    expect(usage.sites).toBeLessThan(LIMITS.sites);
+    expect(usage.rows).toBeLessThan(LIMITS.rows);
+    expect(await countUsage(db, OTHER)).toEqual({ projects: 0, sites: 0, rows: 0 });
+  });
 
   it("replaces the owner's projects on a second run and keeps other users' data", async () => {
     await db.insert(s.project).values({

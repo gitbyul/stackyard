@@ -22,6 +22,8 @@ import {
 } from "@/lib/import/datasets";
 import { INDUSTRIES } from "@/lib/productivity/benchmarks";
 import { deleteOwnedProject } from "@/lib/projects/delete";
+import { countUsage } from "@/lib/usage/count";
+import { LIMITS } from "@/lib/usage/limits";
 
 /** Rows per INSERT statement; well under Postgres' 65,535 parameter limit. */
 const CHUNK = 1000;
@@ -37,7 +39,18 @@ const newId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 export type ImportResult =
   | { ok: true; inserted: number; updated: number; removed: number }
   | { ok: false; error: "notFound" | "badRequest" | "tooLarge" }
-  | { ok: false; error: "invalid"; issues: Issue[]; issueCount: number };
+  | { ok: false; error: "invalid"; issues: Issue[]; issueCount: number }
+  | { ok: false; error: "rowLimit"; total: number; limit: number };
+
+/**
+ * The account's row total after an import that adds `added` rows and drops
+ * `removed`, or null when it stays within the limit (PRD S-04).
+ */
+async function rowsOverLimit(userId: string, added: number, removed: number) {
+  const { rows } = await countUsage(db, userId);
+  const total = rows - removed + added;
+  return total > LIMITS.rows ? total : null;
+}
 
 /**
  * Validates the whole file and writes nothing unless every row is valid.
@@ -67,6 +80,10 @@ export async function importDataset(
     const updated = codes.filter((c) => existingCodes.has(c)).length;
     const keep = new Set(codes);
     const removed = replace ? existing.filter((r) => !keep.has(r.code)).length : 0;
+    // Dropped SKUs also take their order lines with them; not counting those
+    // keeps the check on the safe side.
+    const overSkus = await rowsOverLimit(me.id, codes.length - updated, removed);
+    if (overSkus !== null) return { ok: false, error: "rowLimit", total: overSkus, limit: LIMITS.rows };
 
     await runAtomic(db, (q) => [
       // Replace = the file becomes the SKU master. Dropping a SKU also drops
@@ -110,6 +127,8 @@ export async function importDataset(
     if (issueCount > 0) return { ok: false, error: "invalid", issues, issueCount };
 
     const removed = replace ? await countRows("orderLines", siteId) : 0;
+    const overLines = await rowsOverLimit(me.id, parsed.rows.length, removed);
+    if (overLines !== null) return { ok: false, error: "rowLimit", total: overLines, limit: LIMITS.rows };
     await runAtomic(db, (q) => [
       ...(replace ? [q.delete(orderLine).where(eq(orderLine.siteId, siteId))] : []),
       ...chunks(parsed.rows).map((part) =>
@@ -131,6 +150,8 @@ export async function importDataset(
   const parsed = parseDataset("laborLogs", csv);
   if (parsed.issueCount > 0) return { ok: false, error: "invalid", issues: parsed.issues, issueCount: parsed.issueCount };
   const removed = replace ? await countRows("laborLogs", siteId) : 0;
+  const overLogs = await rowsOverLimit(me.id, parsed.rows.length, removed);
+  if (overLogs !== null) return { ok: false, error: "rowLimit", total: overLogs, limit: LIMITS.rows };
   await runAtomic(db, (q) => [
     ...(replace ? [q.delete(laborLog).where(eq(laborLog.siteId, siteId))] : []),
     ...chunks(parsed.rows).map((part) => q.insert(laborLog).values(part.map((r) => ({ id: newId("lab"), siteId, ...r })))),
@@ -198,12 +219,15 @@ const projectInput = z.object({
   industry: z.enum(INDUSTRIES),
 });
 
-export type CreateResult = { ok: true; id: string } | { ok: false; error: "invalid" | "notFound" | "retry" };
+export type CreateResult =
+  | { ok: true; id: string }
+  | { ok: false; error: "invalid" | "notFound" | "retry" | "projectLimit" | "siteLimit" };
 
 export async function createProject(input: z.input<typeof projectInput>): Promise<CreateResult> {
   const me = await requireUser();
   const parsed = projectInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
+  if ((await countUsage(db, me.id)).projects >= LIMITS.projects) return { ok: false, error: "projectLimit" };
 
   // Project codes are unique across the database; retry on the rare clash.
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -242,6 +266,7 @@ export async function createSite(input: z.input<typeof siteInput>): Promise<Crea
     .from(project)
     .where(and(eq(project.id, parsed.data.projectId), eq(project.ownerId, me.id)));
   if (!owned) return { ok: false, error: "notFound" };
+  if ((await countUsage(db, me.id)).sites >= LIMITS.sites) return { ok: false, error: "siteLimit" };
   const id = newId("site");
   await db.insert(site).values({ id, ...parsed.data });
   return { ok: true, id };

@@ -437,6 +437,7 @@ export const ko: Dictionary = {
     noSites: "아직 사이트가 없습니다. 프로젝트를 만든 뒤 사이트를 추가하면 데이터를 가져올 수 있습니다.",
     newProject: "새 프로젝트",
     newSite: "새 사이트",
+    usage: "사용량: 프로젝트 {projects}/{maxProjects}개 · 사이트 {sites}/{maxSites}곳 · 데이터 {rows}/{maxRows}행",
     demoNote: "데모 워크스페이스는 공유되므로, 가져온 데이터를 다른 방문자도 보고 바꿀 수 있습니다. 매일 새벽 3시(한국 시간)쯤 샘플 데이터로 되돌아갑니다.",
     datasets: {
       skus: { title: "SKU 마스터", body: "SKU별 치수, 무게, 케이스 입수. 주문 라인은 이 코드를 참조합니다." },
@@ -522,6 +523,9 @@ export const ko: Dictionary = {
       tooLarge: "파일이 너무 큽니다.",
       invalid: "올바르지 않은 값이 있습니다. 입력 내용을 확인해 주세요.",
       retry: "저장 중 충돌이 생겼습니다. 다시 시도해 주세요.",
+      projectLimit: "프로젝트는 계정당 최대 {n}개까지 만들 수 있습니다. 하나를 지운 뒤 다시 시도하세요.",
+      siteLimit: "사이트는 계정당 최대 {n}곳까지 만들 수 있습니다. 하나를 지운 뒤 다시 시도하세요.",
+      rowLimit: "데이터는 계정당 최대 {limit}행까지 저장할 수 있습니다. 이 파일을 가져오면 {total}행이 됩니다.",
       generic: "문제가 생겼습니다. 다시 시도해 주세요.",
     },
     projectForm: {

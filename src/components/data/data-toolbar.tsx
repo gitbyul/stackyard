@@ -19,8 +19,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useI18n } from "@/i18n/client";
+import { fill, useI18n } from "@/i18n/client";
 import { INDUSTRIES } from "@/lib/productivity/benchmarks";
+import { LIMITS } from "@/lib/usage/limits";
+
+/** Error text for a create action; the limit errors name the limit. */
+function createError(errors: Record<string, string>, error: string) {
+  const n = error === "siteLimit" ? LIMITS.sites : LIMITS.projects;
+  return fill(errors[error] ?? errors.generic, { n });
+}
 
 export type SiteOption = { id: string; name: string; projectName: string };
 export type ProjectOption = { id: string; name: string };
@@ -87,7 +94,7 @@ function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
           client: String(form.get("client") ?? ""),
           industry,
         });
-        if (!res.ok) return void toast.error(t.errors[res.error]);
+        if (!res.ok) return void toast.error(createError(t.errors, res.error));
         toast.success(t.projectForm.done);
         setOpen(false);
         onCreated();
@@ -164,7 +171,7 @@ function NewSiteDialog({ projects, onCreated }: { projects: ProjectOption[]; onC
           clearHeight: Number(form.get("clearHeight")),
           dockDoors: Number(form.get("dockDoors")),
         });
-        if (!res.ok) return void toast.error(t.errors[res.error]);
+        if (!res.ok) return void toast.error(createError(t.errors, res.error));
         toast.success(t.siteForm.done);
         setOpen(false);
         onCreated(res.id);

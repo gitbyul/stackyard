@@ -7,8 +7,10 @@ import { DatasetCard } from "@/components/data/dataset-card";
 import { DeleteSite } from "@/components/data/delete-site";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fill } from "@/i18n/fill";
-import { getDictionary } from "@/i18n/server";
-import { getDatasetSummary, getDataWorkspace } from "@/lib/data/datasets";
+import { getDictionary, getLocale } from "@/i18n/server";
+import { getDatasetSummary, getDataWorkspace, getUsage } from "@/lib/data/datasets";
+import { formatFor } from "@/lib/format";
+import { LIMITS } from "@/lib/usage/limits";
 import { DATASETS } from "@/lib/import/datasets";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,7 +43,9 @@ export default async function DataPage({ searchParams }: PageProps<"/[lang]/data
 async function DataManager({ searchParams }: Pick<PageProps<"/[lang]/data">, "searchParams">) {
   const sp = await searchParams;
   const wanted = Array.isArray(sp.site) ? sp.site[0] : sp.site;
-  const [{ projects, sites }, t] = await Promise.all([getDataWorkspace(), getDictionary().then((d) => d.data)]);
+  const [{ projects, sites }, usage, locale] = await Promise.all([getDataWorkspace(), getUsage(), getLocale()]);
+  const t = (await getDictionary(locale)).data;
+  const f = formatFor(locale);
   const current = sites.find((s) => s.id === wanted) ?? sites[0];
   const summary = current ? await getDatasetSummary(current.id) : null;
 
@@ -52,6 +56,16 @@ async function DataManager({ searchParams }: Pick<PageProps<"/[lang]/data">, "se
         projects={projects.map((p) => ({ id: p.id, name: p.name }))}
         siteId={current?.id ?? null}
       />
+      <p className="px-6 pt-3 text-xs text-muted-foreground tabular-nums">
+        {fill(t.usage, {
+          projects: f.number(usage.projects),
+          maxProjects: f.number(LIMITS.projects),
+          sites: f.number(usage.sites),
+          maxSites: f.number(LIMITS.sites),
+          rows: f.number(usage.rows),
+          maxRows: f.number(LIMITS.rows),
+        })}
+      </p>
       <div className="space-y-6 p-6">
         {!current || !summary ? (
           <p className="text-sm text-muted-foreground">{t.noSites}</p>

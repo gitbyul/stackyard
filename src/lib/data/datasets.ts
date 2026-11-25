@@ -5,6 +5,13 @@ import { and, asc, count, eq, max, min, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { laborLog, orderLine, project, site, sku } from "@/lib/db/schema";
+import { countUsage } from "@/lib/usage/count";
+
+/** What the signed-in account stores, against the limits (PRD S-04). */
+export async function getUsage() {
+  const user = await requireUser();
+  return countUsage(db, user.id);
+}
 
 /** Sites and projects the user owns, for the data page pickers. */
 export async function getDataWorkspace() {

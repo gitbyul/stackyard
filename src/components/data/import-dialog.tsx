@@ -104,6 +104,8 @@ export function ImportDialog({ siteId, kind }: { siteId: string; kind: DatasetKi
           router.refresh();
         } else if (res.error === "invalid") {
           setServerIssues({ issues: res.issues, issueCount: res.issueCount });
+        } else if (res.error === "rowLimit") {
+          toast.error(fill(t.errors.rowLimit, { limit: fmt.number(res.limit), total: fmt.number(res.total) }));
         } else {
           toast.error(t.errors[res.error]);
         }

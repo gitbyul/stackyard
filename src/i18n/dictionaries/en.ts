@@ -439,6 +439,7 @@ export const en = {
     noSites: "No sites yet. Create a project, then add a site to start importing data.",
     newProject: "New project",
     newSite: "New site",
+    usage: "Usage: {projects}/{maxProjects} projects · {sites}/{maxSites} sites · {rows}/{maxRows} rows of data",
     demoNote: "The demo workspace is shared, so other visitors can see and change what you import. It goes back to the sample data every day at about 03:00 Korea time (18:00 UTC).",
     datasets: {
       skus: { title: "SKU master", body: "Dimensions, weight and case pack per SKU. Order lines refer to these codes." },
@@ -524,6 +525,9 @@ export const en = {
       tooLarge: "The file is too large.",
       invalid: "Some values aren't valid. Check the form and try again.",
       retry: "Something clashed while saving. Try again.",
+      projectLimit: "An account can have up to {n} projects. Delete one, then try again.",
+      siteLimit: "An account can have up to {n} sites. Delete one, then try again.",
+      rowLimit: "An account can store up to {limit} rows of data. Importing this file would make it {total}.",
       generic: "Something went wrong. Try again.",
     },
     projectForm: {
