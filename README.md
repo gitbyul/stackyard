@@ -65,9 +65,18 @@ Rules:
 
 The parser and validation rules are in `src/lib/import/` (unit-tested) and the server actions are in `src/app/[lang]/(app)/data/actions.ts`.
 
+Each account has storage limits (`src/lib/usage/limits.ts`): **5 projects, 8 sites and 120,000 rows of data** (SKUs, order lines and labour logs together). The data page shows current usage, and a create or import that would go past a limit is refused before anything is written. The demo sample uses 3 projects, 4 sites and about 80,000 rows.
+
 Deleting is scoped to the owner: a project is removed only if the signed-in user owns it, and the foreign-key cascades take its sites, SKUs, order lines, labour logs, layouts and process maps with it in one statement (`src/lib/projects/delete.ts`). Deleting an account works the same way: `project.owner_id` is `ON DELETE CASCADE`, so the account's projects and everything under them go with it and no orphaned rows are left.
 
 > The public demo account is shared, so anything imported there is visible to other visitors. It is reset to the sample data every day (see *Daily demo reset*).
+
+## Accounts and security
+
+- **No public sign-up.** Better Auth's sign-up endpoint is off (`disableSignUp`); only `pnpm db:seed` creates an account (the demo user).
+- **The demo account is read-only as an account.** Its password is public, so a demo session may only call `get-session`, `sign-in/email` and `sign-out`. Every other auth endpoint (change password, email or profile, delete the account, list or revoke sessions) answers 403. It is an allowlist, so endpoints added by future Better Auth versions are refused too.
+- **Post-login redirects stay on the site.** `next` is resolved as a URL and must keep this origin (`src/lib/auth/safe-next.ts`), so `//evil`, `/\evil` or a tab trick fall back to the dashboard.
+- **Accounts are purged every three days** (see *Account purge* below).
 
 ## Languages
 
@@ -115,6 +124,9 @@ Unknown URLs and detail pages (a project, a layout in the studio, a process map)
 - **Database tests** that start an in-memory PGlite, apply the real migrations and check what unit tests can't. They clear `DATABASE_URL` first, so they never touch Neon.
   - `src/lib/projects/delete.test.ts`: the daily demo reset (fills, replaces, leaves no staging rows, keeps other users' data) and project deletion (owner-only, cascades to everything under the project and nothing else), and account deletion (takes the account's projects, their data and sessions, and nothing of other users).
   - `src/lib/access/detail.test.ts`: who may open a project, layout or process map page (owner yes; other users, expired sessions, unknown tokens and missing ids no).
+  - `src/lib/auth/guard.test.ts`: real Better Auth on PGlite: sign-up is refused, a demo session can't change the account or list sessions, other accounts can.
+  - `src/lib/accounts/purge.test.ts`: the account purge keeps the demo account whole, removes every other account with all its data, and refuses to run without the account to keep; plus the cron secret check.
+- `src/lib/auth/safe-next.test.ts` checks the redirect rules against known bypasses.
 
 ## Continuous integration
 
@@ -142,8 +154,9 @@ request after a pause takes a second or two).
    Don't set `BETTER_AUTH_URL`; the app picks the production domain or the
    preview URL from Vercel's own variables.
 5. **Add the cron secret.** Create `CRON_SECRET` (another random string, e.g.
-   `openssl rand -hex 32`) for Production. Vercel Schedules sends it to the daily
-   demo reset; without it the endpoint stays switched off.
+   `openssl rand -hex 32`) for Production. Vercel Schedules sends it to the
+   scheduled jobs (daily demo reset, account purge); without it those endpoints
+   stay switched off.
 6. **Deploy.** Push to `main` (or Redeploy). The `vercel-build` script applies
    migrations, seeds the demo data **only if the database is empty**, then
    builds, so nobody has to copy the connection string. Every pull request gets
@@ -174,6 +187,12 @@ To run it by hand on production:
 curl -H "Authorization: Bearer $CRON_SECRET" https://<your-domain>/api/cron/reset-demo
 ```
 
+### Account purge
+
+- A second schedule (`purge-accounts`) calls `GET /api/cron/purge-accounts` at 04:00 Asia/Seoul on days 1, 4, 7 … of each month (`0 4 */3 * *`), an hour after the demo reset. Around month ends the gap can be one or two days.
+- It deletes **every account except the demo account**, with everything tied to it: projects and all their data (through `project.owner_id`'s cascade), sessions, login methods and pending verifications, in one atomic write (`src/lib/accounts/purge.ts`).
+- If the demo account can't be found it deletes nothing and answers 500, so it can never turn into "delete everyone". Logs carry counts only, never emails.
+
 To rebuild everything from scratch, demo user included, run `pnpm db:seed` locally with the Neon `DATABASE_URL` and `BETTER_AUTH_SECRET` in your environment.
 
 ## Project layout
@@ -190,6 +209,7 @@ src/
         dashboard/  projects/  projects/[projectId]/  data/  analysis/  studio/  studio/[layoutId]/  slotting/  productivity/  process/  process/[mapId]/
     api/auth/[...all]/     Better Auth handler
     api/cron/reset-demo/   daily demo reset (Vercel Schedules)
+    api/cron/purge-accounts/ account purge every three days (Vercel Schedules)
   components/app/          app-level components (sidebar, header, badges)
   components/analysis/     ABC filters, Pareto chart, share bars, matrix, SKU table
   components/studio/       3D editor: scene, instanced racks, store, toolbar, inspector
@@ -211,6 +231,9 @@ src/
   lib/demo/                deterministic sample data + the staged demo reset
   lib/projects/            owner-scoped project deletion + database tests
   lib/access/              detail-page ownership check used by proxy.ts + database tests
+  lib/accounts/            account purge + database tests
+  lib/cron/                bearer-secret check shared by the scheduled endpoints
+  lib/usage/               per-account limits and the usage counter
   i18n/                    locale config, dictionaries (en, ko), server + client helpers
   proxy.ts                 locale redirect for bare URLs, optimistic redirect to login, 404 for missing detail pages
 scripts/                   migrate + seed
