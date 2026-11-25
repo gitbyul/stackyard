@@ -5,9 +5,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { DEFAULT_LOCALE, isLocale, localeFromPath, localePath, type Locale } from "@/i18n/config";
+import { DEFAULT_LOCALE, isLocale, localePath, type Locale } from "@/i18n/config";
 import { getDictionary, getLocale } from "@/i18n/server";
 import { auth } from "@/lib/auth";
+import { safeNext } from "@/lib/auth/safe-next";
 import { DEMO_USER } from "@/lib/auth/demo";
 
 export type LoginState = { error?: string };
@@ -22,15 +23,6 @@ const credentials = z.object({
 /** The form posts its page's locale; fall back to the Referer, then English. */
 async function localeOf(value: unknown): Promise<Locale> {
   return isLocale(value) ? value : await getLocale().catch(() => DEFAULT_LOCALE);
-}
-
-/**
- * Only allow same-site paths as the post-login destination, and make sure
- * they carry a locale (the proxy adds one to `next`, but be defensive).
- */
-function safeNext(locale: Locale, next?: string) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return localePath(locale, "/dashboard");
-  return localeFromPath(next) ? next : localePath(locale, next);
 }
 
 export async function signIn(_prev: LoginState, formData: FormData): Promise<LoginState> {
