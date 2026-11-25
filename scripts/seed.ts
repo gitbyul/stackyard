@@ -15,7 +15,8 @@ import * as s from "../src/lib/db/schema";
 import { replaceDemoData } from "../src/lib/demo/reset";
 
 const db = createDb();
-const auth = createAuth(db);
+// Public sign-up is off; the seed is the one place that creates an account.
+const auth = createAuth(db, { allowSignUp: true });
 
 async function main() {
   // `--if-empty` (used by the Vercel build) only seeds a fresh database, so
